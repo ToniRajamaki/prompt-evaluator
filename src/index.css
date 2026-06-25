@@ -1,1 +1,105 @@
 @import "tailwindcss";
+
+.prose {
+  color: #374151;
+  line-height: 1.7;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose h1 {
+  margin-bottom: 1rem;
+  color: #111827;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.prose h2 {
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.prose p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose ul {
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.prose li {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding-left: 0.2rem;
+}
+
+.prose li::marker {
+  color: #9ca3af;
+}
+
+.prose strong {
+  color: #111827;
+  font-weight: 650;
+}
+
+.prose em {
+  color: #4b5563;
+}
+
+.prose a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid #d1d5db;
+  color: #4b5563;
+}
+
+.prose code {
+  border-radius: 0.25rem;
+  background: #f3f4f6;
+  padding: 0.1rem 0.3rem;
+  color: #111827;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  margin: 1rem 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background: #111827;
+  padding: 1rem;
+  color: #f9fafb;
+}
+
+.prose pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.prose-sm {
+  font-size: 0.95rem;
+}
