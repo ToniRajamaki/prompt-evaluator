@@ -1,10 +1,15 @@
-import type { PdfSource, ChatMessage, ChatHistoryItem } from './types'
+import type { PdfSource, SourceFolder, ChatMessage, ChatHistoryItem } from './types'
+
+export const sourceFolders: SourceFolder[] = [
+  { id: 'f1', name: 'Reports', parentId: null },
+  { id: 'f2', name: '2024', parentId: 'f1' },
+]
 
 export const pdfSources: PdfSource[] = [
-  { id: 's1', name: 'annual-report-2024.pdf', pages: 42, selected: true },
-  { id: 's2', name: 'product-spec.pdf', pages: 12, selected: true },
-  { id: 's3', name: 'meeting-notes.pdf', pages: 3, selected: false },
-  { id: 's4', name: 'research-paper.pdf', pages: 28, selected: false },
+  { id: 's1', name: 'annual-report-2024.pdf', pages: 42, selected: true, parentId: 'f2' },
+  { id: 's2', name: 'product-spec.pdf', pages: 12, selected: true, parentId: null },
+  { id: 's3', name: 'meeting-notes.pdf', pages: 3, selected: false, parentId: 'f1' },
+  { id: 's4', name: 'research-paper.pdf', pages: 28, selected: false, parentId: null },
 ]
 
 export const chatMessages: ChatMessage[] = [
