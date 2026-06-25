@@ -1,16 +1,16 @@
 import type { PdfSource, SourceFolder, ChatMessage, ChatHistoryItem } from './types'
+import { sourceFiles } from './fileRegistry'
 
-export const sourceFolders: SourceFolder[] = [
-  { id: 'f1', name: 'Reports', parentId: null },
-  { id: 'f2', name: '2024', parentId: 'f1' },
-]
+export const sourceFolders: SourceFolder[] = []
 
-export const pdfSources: PdfSource[] = [
-  { id: 's1', name: 'annual-report-2024.pdf', pages: 42, selected: true, parentId: 'f2' },
-  { id: 's2', name: 'product-spec.pdf', pages: 12, selected: true, parentId: null },
-  { id: 's3', name: 'meeting-notes.pdf', pages: 3, selected: false, parentId: 'f1' },
-  { id: 's4', name: 'research-paper.pdf', pages: 28, selected: false, parentId: null },
-]
+export const pdfSources: PdfSource[] = sourceFiles.map((f) => ({
+  id: f.id,
+  name: f.name,
+  selected: false,
+  parentId: null,
+  kind: f.kind,
+  url: f.url,
+}))
 
 export const chatMessages: ChatMessage[] = [
   { id: 'm1', role: 'user', text: 'What were the main takeaways from the annual report?' },

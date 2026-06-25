@@ -7,6 +7,8 @@ interface SourceTreeProps {
   depth: number
   expanded: Set<string>
   dragOverId: string | null
+  selectedId: string | null
+  onSelect: (id: string) => void
   onToggleExpand: (id: string) => void
   onToggleSelect: (id: string) => void
   onMove: (nodeId: string, targetFolderId: string | null) => void
@@ -48,6 +50,8 @@ export default function SourceTree(props: SourceTreeProps) {
             <SourceItem
               source={node.source}
               depth={depth}
+              active={props.selectedId === node.source.id}
+              onSelect={props.onSelect}
               onToggleSelect={props.onToggleSelect}
               onMove={props.onMove}
             />

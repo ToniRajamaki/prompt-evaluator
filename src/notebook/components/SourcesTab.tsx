@@ -40,7 +40,12 @@ function isDescendant(
   return false
 }
 
-export default function SourcesTab() {
+interface SourcesTabProps {
+  selectedId: string | null
+  onSelect: (id: string) => void
+}
+
+export default function SourcesTab({ selectedId, onSelect }: SourcesTabProps) {
   const [folders, setFolders] = useState<SourceFolder[]>(initialFolders)
   const [sources, setSources] = useState<PdfSource[]>(initialSources)
   const [expanded, setExpanded] = useState<Set<string>>(
@@ -149,6 +154,8 @@ export default function SourcesTab() {
           depth={0}
           expanded={expanded}
           dragOverId={dragOverId}
+          selectedId={selectedId}
+          onSelect={onSelect}
           onToggleExpand={toggleExpand}
           onToggleSelect={toggleSelect}
           onMove={move}

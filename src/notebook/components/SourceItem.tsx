@@ -1,16 +1,30 @@
 import type { DragEvent } from 'react'
-import type { PdfSource } from '../types'
+import type { PdfSource, SourceKind } from '../types'
 
 interface SourceItemProps {
   source: PdfSource
   depth: number
+  active: boolean
+  onSelect: (id: string) => void
   onToggleSelect: (id: string) => void
   onMove: (nodeId: string, targetFolderId: string | null) => void
 }
 
 const INDENT = 14
 
-export default function SourceItem({ source, depth, onToggleSelect }: SourceItemProps) {
+const iconColor: Record<SourceKind, string> = {
+  pdf: 'text-rose-500',
+  md: 'text-sky-500',
+  txt: 'text-gray-500',
+}
+
+export default function SourceItem({
+  source,
+  depth,
+  active,
+  onSelect,
+  onToggleSelect,
+}: SourceItemProps) {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('text/source-id', source.id)
     e.dataTransfer.effectAllowed = 'move'
@@ -20,9 +34,12 @@ export default function SourceItem({ source, depth, onToggleSelect }: SourceItem
     <div
       draggable
       onDragStart={handleDragStart}
-      className="group flex h-7 cursor-grab items-center gap-1.5 rounded px-1 text-sm hover:bg-gray-100"
+      onClick={() => onSelect(source.id)}
+      className={`group flex h-7 cursor-pointer items-center gap-1.5 rounded px-1 text-sm ${
+        active ? 'bg-blue-100 text-blue-900' : 'hover:bg-gray-100'
+      }`}
       style={{ paddingLeft: depth * INDENT + 22 }}
-      title={`${source.name} · ${source.pages} pages`}
+      title={source.name}
     >
       <input
         type="checkbox"
@@ -32,7 +49,7 @@ export default function SourceItem({ source, depth, onToggleSelect }: SourceItem
         onClick={(e) => e.stopPropagation()}
       />
       <svg
-        className="h-3.5 w-3.5 shrink-0 text-rose-500"
+        className={`h-3.5 w-3.5 shrink-0 ${iconColor[source.kind]}`}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -42,8 +59,8 @@ export default function SourceItem({ source, depth, onToggleSelect }: SourceItem
         <path d="M14 2v6h6" />
       </svg>
       <span className="min-w-0 flex-1 truncate text-gray-800">{source.name}</span>
-      <span className="shrink-0 text-[11px] text-gray-400 group-hover:text-gray-500">
-        {source.pages}p
+      <span className="shrink-0 text-[11px] uppercase text-gray-400 group-hover:text-gray-500">
+        {source.kind}
       </span>
     </div>
   )

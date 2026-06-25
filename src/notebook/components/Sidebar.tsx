@@ -4,7 +4,12 @@ import ChatHistoryTab from './ChatHistoryTab'
 
 type Tab = 'sources' | 'history'
 
-export default function Sidebar() {
+interface SidebarProps {
+  selectedId: string | null
+  onSelect: (id: string) => void
+}
+
+export default function Sidebar({ selectedId, onSelect }: SidebarProps) {
   const [tab, setTab] = useState<Tab>('sources')
 
   const tabClass = (active: boolean) =>
@@ -22,7 +27,7 @@ export default function Sidebar() {
           onClick={() => setTab('sources')}
           className={tabClass(tab === 'sources')}
         >
-          PDF sources
+          Sources
         </button>
         <button
           type="button"
@@ -34,7 +39,11 @@ export default function Sidebar() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {tab === 'sources' ? <SourcesTab /> : <ChatHistoryTab />}
+        {tab === 'sources' ? (
+          <SourcesTab selectedId={selectedId} onSelect={onSelect} />
+        ) : (
+          <ChatHistoryTab />
+        )}
       </div>
     </aside>
   )
