@@ -12,7 +12,7 @@ export default function ChatMessage({ message, streaming = false }: ChatMessageP
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-lg rounded bg-gray-800 px-3 py-2 text-sm whitespace-pre-wrap text-white">
+        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-indigo-600 px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-white shadow-sm">
           {message.text}
         </div>
       </div>
@@ -21,7 +21,7 @@ export default function ChatMessage({ message, streaming = false }: ChatMessageP
 
   return (
     <div className="flex justify-start">
-      <div className="max-w-lg rounded border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800">
+      <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-gray-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-gray-700 shadow-sm">
         <div className="prose prose-sm max-w-none prose-pre:my-2 prose-p:my-1.5 first:prose-p:mt-0 last:prose-p:mb-0">
           <ReactMarkdown>{message.text}</ReactMarkdown>
         </div>

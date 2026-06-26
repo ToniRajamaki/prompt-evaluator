@@ -25,14 +25,32 @@ export default function NotebookApp() {
   }, [selectedId])
 
   return (
-    <div className="flex h-screen flex-col bg-white text-gray-900">
-      <header className="border-b border-gray-200 px-4 py-3">
-        <h1 className="text-lg font-semibold">PDF Notebook</h1>
+    <div className="flex h-screen flex-col bg-[#f7f7f8] text-gray-900">
+      <header className="flex items-center gap-3 border-b border-gray-200 bg-white/80 px-5 py-3 backdrop-blur">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </span>
+        <div className="flex flex-col leading-tight">
+          <h1 className="text-sm font-semibold text-gray-900">SourceChat</h1>
+          <span className="text-xs text-gray-400">Chat with your documents</span>
+        </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar selectedId={selectedId} onSelect={setSelectedId} />
-        <div className="flex-1 overflow-hidden border-r border-gray-200">
+      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+        <aside className="flex w-72 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <Sidebar selectedId={selectedId} onSelect={setSelectedId} />
+        </aside>
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <FileViewer
             file={selected}
             chunks={chunkSet?.chunks}
@@ -43,7 +61,7 @@ export default function NotebookApp() {
             }
           />
         </div>
-        <div className="flex w-96 flex-col">
+        <div className="flex w-96 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <RightPanel
             chunkSet={chunkSet}
             hoveredChunkId={hoveredChunkId}

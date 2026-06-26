@@ -25,15 +25,15 @@ export default function RightPanel({
   const activeTab = showChunks ? tab : 'chat'
 
   const tabClass = (active: boolean) =>
-    `relative flex-1 px-3 py-2 text-sm font-medium border-b-2 ${
+    `relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
       active
-        ? 'border-gray-800 text-gray-900'
-        : 'border-transparent text-gray-500 hover:text-gray-700'
+        ? 'bg-white text-gray-900 shadow-sm'
+        : 'text-gray-500 hover:text-gray-800'
     }`
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex border-b border-gray-200 bg-white">
+      <div className="flex gap-1 border-b border-gray-200 bg-gray-50/70 p-2">
         <button
           type="button"
           onClick={() => setTab('chat')}
@@ -48,7 +48,7 @@ export default function RightPanel({
             className={tabClass(activeTab === 'chunks')}
           >
             Chunks
-            <span className="ml-1.5 rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+            <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">
               {chunkSet?.chunks.length}
             </span>
           </button>
