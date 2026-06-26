@@ -38,3 +38,34 @@ export interface ChatHistoryItem {
   title: string
   updatedAt: string
 }
+
+export interface Chunk {
+  id: string
+  index: number
+  start: number
+  end: number
+  length: number
+  text: string
+}
+
+export interface ChunkSet {
+  source: string
+  page: number
+  method: string
+  params: Record<string, unknown>
+  chunks: Chunk[]
+  fullText: string
+}
+
+export interface HighlightRect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export interface ChunkPageHighlights {
+  chunkId: string
+  pageNumber: number
+  rects: HighlightRect[]
+}

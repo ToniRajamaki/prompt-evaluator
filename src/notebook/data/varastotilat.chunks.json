@@ -1,0 +1,58 @@
+{
+  "source": "Varastotilat.pdf",
+  "page": 1,
+  "method": "recursive-character-splitter",
+  "params": {
+    "chunkSize": 280,
+    "chunkOverlap": 40,
+    "separators": [
+      "\n\n",
+      "\n",
+      ". ",
+      " "
+    ]
+  },
+  "chunks": [
+    {
+      "id": "varastotilat-c01",
+      "index": 0,
+      "start": 0,
+      "end": 132,
+      "length": 132,
+      "text": "Varastotilat\nMuistathan huolehtia myös mahdollisen varastotilan tyhjentämisestä ja siistimisestä.\nMikäli asuntoa luovutettaessa em."
+    },
+    {
+      "id": "varastotilat-c02",
+      "index": 1,
+      "start": 92,
+      "end": 444,
+      "length": 352,
+      "text": "estä.\nMikäli asuntoa luovutettaessa em. listan mukaisia siivouksia ei ole suoritettu tai asunnossa on muita siivouspuutteita, on vuokranantajalla oikeus pidättää vakuudesta ensisijaisesti ulkopuolisen yrityksen veloittama kustannus töiden suorittamisesta tai vaihtoehtoisesti Kuluttajariitalautakunnan suosituksen mukainen korvaus itsetehdystä työstä."
+    },
+    {
+      "id": "varastotilat-c03",
+      "index": 2,
+      "start": 404,
+      "end": 551,
+      "length": 147,
+      "text": "n mukainen korvaus itsetehdystä työstä. Vuokralaisen on myös korvattava välittäjälle uusintatarkastuksesta aiheutuvat kustannukset matkakuluineen."
+    },
+    {
+      "id": "varastotilat-c04",
+      "index": 3,
+      "start": 511,
+      "end": 769,
+      "length": 258,
+      "text": "aiheutuvat kustannukset matkakuluineen. Lisäksi vuokranantajalla on oikeus pidättää vakuudesta huoneiston uudelleen vuokraamisen viivästymisestä aiheutuvat kulut ja mahdolliset uuden vuokralaisen hallintaoikeuden viivästymisestä vaatimat vahingonkorvaukset."
+    },
+    {
+      "id": "varastotilat-c05",
+      "index": 4,
+      "start": 729,
+      "end": 836,
+      "length": 107,
+      "text": "stymisestä vaatimat vahingonkorvaukset. Vakuuden määrä ei ole mahdollisen vahingonkorvauksen enimmäismäärä."
+    }
+  ],
+  "fullText": "Varastotilat\nMuistathan huolehtia myös mahdollisen varastotilan tyhjentämisestä ja siistimisestä.\nMikäli asuntoa luovutettaessa em. listan mukaisia siivouksia ei ole suoritettu tai asunnossa on muita siivouspuutteita, on vuokranantajalla oikeus pidättää vakuudesta ensisijaisesti ulkopuolisen yrityksen veloittama kustannus töiden suorittamisesta tai vaihtoehtoisesti Kuluttajariitalautakunnan suosituksen mukainen korvaus itsetehdystä työstä. Vuokralaisen on myös korvattava välittäjälle uusintatarkastuksesta aiheutuvat kustannukset matkakuluineen. Lisäksi vuokranantajalla on oikeus pidättää vakuudesta huoneiston uudelleen vuokraamisen viivästymisestä aiheutuvat kulut ja mahdolliset uuden vuokralaisen hallintaoikeuden viivästymisestä vaatimat vahingonkorvaukset. Vakuuden määrä ei ole mahdollisen vahingonkorvauksen enimmäismäärä."
+}

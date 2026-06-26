@@ -1,12 +1,22 @@
-import type { SourceFile } from '../types'
+import type { Chunk, SourceFile } from '../types'
 import PdfViewer from './PdfViewer'
 import TextViewer from './TextViewer'
 
 interface FileViewerProps {
   file: SourceFile | null
+  chunks?: Chunk[]
+  hoveredChunkId?: string | null
+  activeChunkId?: string | null
+  onChunkClick?: (chunkId: string) => void
 }
 
-export default function FileViewer({ file }: FileViewerProps) {
+export default function FileViewer({
+  file,
+  chunks,
+  hoveredChunkId,
+  activeChunkId,
+  onChunkClick,
+}: FileViewerProps) {
   if (!file) {
     return (
       <div className="flex h-full items-center justify-center bg-gray-50 text-sm text-gray-400">
@@ -22,7 +32,13 @@ export default function FileViewer({ file }: FileViewerProps) {
       </div>
       <div className="flex-1 overflow-hidden">
         {file.kind === 'pdf' ? (
-          <PdfViewer url={file.url} />
+          <PdfViewer
+            url={file.url}
+            chunks={chunks}
+            hoveredChunkId={hoveredChunkId}
+            activeChunkId={activeChunkId}
+            onChunkClick={onChunkClick}
+          />
         ) : (
           <TextViewer url={file.url} mode={file.kind} />
         )}
