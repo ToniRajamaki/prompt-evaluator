@@ -24,3 +24,6 @@ The frontend talks to `http://localhost:8000` by default. Override with
 - `GET  /api/health` — status + active model
 - `POST /api/chat` — body `{ "messages": [{ "role": "user", "text": "..." }] }`,
   returns `{ "reply": "..." }`
+- `POST /api/chat/stream` — same body as `/api/chat`, but streams the reply as
+  plain-text (`text/plain`) deltas as the model produces them. The frontend chat
+  panel uses this endpoint for the live typewriter effect.

@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import os
 
+from collections.abc import AsyncIterator
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.messages import (
@@ -96,3 +99,27 @@ async def chat(req: ChatRequest) -> ChatResponse:
         raise HTTPException(502, f"Model error: {exc}") from exc
 
     return ChatResponse(reply=result.output)
+
+
+@app.post("/api/chat/stream")
+async def chat_stream(req: ChatRequest) -> StreamingResponse:
+    """Stream the assistant reply as plain-text deltas as the model produces them."""
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(500, "OPENAI_API_KEY is not set. Fill in backend/.env")
+    if not req.messages or req.messages[-1].role != "user":
+        raise HTTPException(400, "Last message must be from the user.")
+
+    prompt = req.messages[-1].text
+    history = _to_history(req.messages[:-1])
+
+    async def gen() -> AsyncIterator[str]:
+        try:
+            async with get_agent().run_stream(
+                prompt, message_history=history
+            ) as result:
+                async for delta in result.stream_text(delta=True):
+                    yield delta
+        except Exception as exc:  # surface a clean error mid-stream
+            yield f"\n\n[stream error: {exc}]"
+
+    return StreamingResponse(gen(), media_type="text/plain; charset=utf-8")
