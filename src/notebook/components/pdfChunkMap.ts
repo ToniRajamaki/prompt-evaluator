@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist'
-import type { Chunk, HighlightRect } from '../types'
+import type { Chunk, HighlightRect, NormalizedHighlightRect } from '../types'
 
 interface TextItemLike {
   str: string
@@ -94,6 +94,18 @@ function rectForItem(
   }
 }
 
+function rectFromNormalized(
+  rect: NormalizedHighlightRect,
+  viewport: pdfjsLib.PageViewport,
+): HighlightRect {
+  return {
+    left: rect.left * viewport.width,
+    top: rect.top * viewport.height,
+    width: rect.width * viewport.width,
+    height: rect.height * viewport.height,
+  }
+}
+
 export interface ChunkRectsByPage {
   [pageNumber: number]: { chunkId: string; rects: HighlightRect[] }[]
 }
@@ -105,6 +117,18 @@ export async function computeChunkHighlights(
 ): Promise<ChunkRectsByPage> {
   const result: ChunkRectsByPage = {}
 
+  for (const chunk of chunks) {
+    for (const manual of chunk.manualHighlights ?? []) {
+      const viewport = viewports[manual.pageNumber]
+      if (!viewport) continue
+      result[manual.pageNumber] ??= []
+      result[manual.pageNumber].push({
+        chunkId: chunk.id,
+        rects: manual.rects.map((rect) => rectFromNormalized(rect, viewport)),
+      })
+    }
+  }
+
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum)
     const viewport = viewports[pageNum]
@@ -113,6 +137,7 @@ export async function computeChunkHighlights(
     const perChunk: { chunkId: string; rects: HighlightRect[] }[] = []
 
     for (const chunk of chunks) {
+      if (chunk.manualHighlights?.length) continue
       const needle = normalize(chunk.text)
       const span = findRange(map.text, needle)
       if (!span) continue

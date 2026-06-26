@@ -27,10 +27,26 @@ export type SourceNode =
   | { kind: 'folder'; folder: SourceFolder; children: SourceNode[] }
   | { kind: 'file'; source: PdfSource }
 
+export interface Citation {
+  id: string
+  fileName: string
+  page: number
+  chunkId: string
+  snippet: string
+}
+
+export interface AnswerParagraph {
+  id: string
+  text: string
+  citations: Citation[]
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
+  /** Structured, source-cited answer. Present only on assistant messages. */
+  paragraphs?: AnswerParagraph[]
 }
 
 export interface ChatHistoryItem {
@@ -46,6 +62,8 @@ export interface Chunk {
   end: number
   length: number
   text: string
+  page?: number
+  manualHighlights?: ManualChunkHighlight[]
 }
 
 export interface ChunkSet {
@@ -62,6 +80,18 @@ export interface HighlightRect {
   top: number
   width: number
   height: number
+}
+
+export interface NormalizedHighlightRect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export interface ManualChunkHighlight {
+  pageNumber: number
+  rects: NormalizedHighlightRect[]
 }
 
 export interface ChunkPageHighlights {

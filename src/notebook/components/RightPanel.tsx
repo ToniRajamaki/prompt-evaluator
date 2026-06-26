@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ChunkSet } from '../types'
+import type { ChunkSet, Citation } from '../types'
 import ChatPanel from './ChatPanel'
 import ChunksPanel from './ChunksPanel'
 
@@ -11,6 +11,7 @@ interface RightPanelProps {
   activeChunkId: string | null
   onHoverChunk: (id: string | null) => void
   onSelectChunk: (id: string | null) => void
+  onCitationClick?: (citation: Citation) => void
 }
 
 export default function RightPanel({
@@ -19,8 +20,9 @@ export default function RightPanel({
   activeChunkId,
   onHoverChunk,
   onSelectChunk,
+  onCitationClick,
 }: RightPanelProps) {
-  const [tab, setTab] = useState<Tab>(chunkSet ? 'chunks' : 'chat')
+  const [tab, setTab] = useState<Tab>('chat')
   const showChunks = Boolean(chunkSet)
   const activeTab = showChunks ? tab : 'chat'
 
@@ -54,7 +56,7 @@ export default function RightPanel({
           </button>
         )}
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {activeTab === 'chunks' && chunkSet ? (
           <ChunksPanel
             chunkSet={chunkSet}
@@ -64,7 +66,7 @@ export default function RightPanel({
             onSelect={onSelectChunk}
           />
         ) : (
-          <ChatPanel />
+          <ChatPanel chunkSet={chunkSet} onCitationClick={onCitationClick} />
         )}
       </div>
     </div>

@@ -1,22 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ChatMessage as ChatMessageType } from '../types'
-import { sendChatStream } from '../api/chat'
-import { useStreamingText } from '../hooks/useStreamingText'
+import type {
+  ChatMessage as ChatMessageType,
+  ChunkSet,
+  Citation,
+} from '../types'
+import { sendMockChat } from '../api/mockChat'
 import ChatMessage from './ChatMessage'
 import TypingDots from './TypingDots'
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  chunkSet: ChunkSet | null
+  onCitationClick?: (citation: Citation) => void
+}
+
+export default function ChatPanel({ chunkSet, onCitationClick }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [streamingId, setStreamingId] = useState<string | null>(null)
-  const [networkDone, setNetworkDone] = useState(false)
 
-  const stream = useStreamingText()
   const scrollRef = useRef<HTMLDivElement>(null)
   const pinnedRef = useRef(true)
-  const fullRef = useRef('')
 
   const maybeScroll = () => {
     if (!pinnedRef.current) return
@@ -32,22 +36,9 @@ export default function ChatPanel() {
     pinnedRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
   }
 
-  // Keep pinned to the bottom while content grows (unless the user scrolled up).
   useEffect(() => {
     maybeScroll()
-  }, [stream.displayed, messages, loading])
-
-  // Finalize once the network is done and the typewriter has caught up.
-  useEffect(() => {
-    if (streamingId && networkDone && stream.caughtUp) {
-      const id = streamingId
-      const text = fullRef.current
-      setMessages((curr) => curr.map((m) => (m.id === id ? { ...m, text } : m)))
-      setStreamingId(null)
-      setNetworkDone(false)
-      setLoading(false)
-    }
-  }, [streamingId, networkDone, stream.caughtUp])
+  }, [messages, loading])
 
   const handleSend = async () => {
     const text = input.trim()
@@ -58,36 +49,28 @@ export default function ChatPanel() {
       role: 'user',
       text,
     }
-    const assistantId = crypto.randomUUID()
-    const next = [...messages, userMessage]
 
-    setMessages([...next, { id: assistantId, role: 'assistant', text: '' }])
+    setMessages((curr) => [...curr, userMessage])
     setInput('')
     setError(null)
     setLoading(true)
-    setStreamingId(assistantId)
-    setNetworkDone(false)
-    fullRef.current = ''
-    stream.reset()
     pinnedRef.current = true
     maybeScroll()
 
     try {
-      await sendChatStream(next, (delta) => {
-        fullRef.current += delta
-        stream.push(delta)
-      })
-      setNetworkDone(true)
+      const answer = await sendMockChat(text, chunkSet)
+      setMessages((curr) => [
+        ...curr,
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          text: answer.text,
+          paragraphs: answer.paragraphs,
+        },
+      ])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
-      const partial = fullRef.current
-      setMessages((curr) =>
-        partial
-          ? curr.map((m) => (m.id === assistantId ? { ...m, text: partial } : m))
-          : curr.filter((m) => m.id !== assistantId),
-      )
-      setStreamingId(null)
-      setNetworkDone(false)
+    } finally {
       setLoading(false)
     }
   }
@@ -111,25 +94,20 @@ export default function ChatPanel() {
             Ask something to get started.
           </p>
         )}
-        {messages.map((message) => {
-          const isStreaming = message.id === streamingId
-          if (isStreaming && stream.displayed.length === 0) {
-            return (
-              <div key={message.id} className="flex justify-start">
-                <div className="rounded border border-gray-200 bg-white px-3 py-2">
-                  <TypingDots />
-                </div>
-              </div>
-            )
-          }
-          return (
-            <ChatMessage
-              key={message.id}
-              message={isStreaming ? { ...message, text: stream.displayed } : message}
-              streaming={isStreaming}
-            />
-          )
-        })}
+        {messages.map((message) => (
+          <ChatMessage
+            key={message.id}
+            message={message}
+            onCitationClick={onCitationClick}
+          />
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="rounded border border-gray-200 bg-white px-3 py-2">
+              <TypingDots />
+            </div>
+          </div>
+        )}
         {error && (
           <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}

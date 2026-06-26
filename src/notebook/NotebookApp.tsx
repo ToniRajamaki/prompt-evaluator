@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import FileViewer from './components/FileViewer'
 import { sourceFiles } from './fileRegistry'
 import { getChunksForFile } from './data/chunksRegistry'
+import type { Citation } from './types'
 
 export default function NotebookApp() {
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -11,6 +12,7 @@ export default function NotebookApp() {
   )
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null)
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null)
+  const pendingChunkId = useRef<string | null>(null)
 
   const selected = sourceFiles.find((f) => f.id === selectedId) ?? null
   const chunkSet = useMemo(
@@ -18,11 +20,27 @@ export default function NotebookApp() {
     [selected],
   )
 
-  // Reset chunk selection when switching files
+  // Reset chunk selection when switching files, but honor a pending citation jump.
   useEffect(() => {
     setHoveredChunkId(null)
-    setActiveChunkId(null)
+    if (pendingChunkId.current) {
+      setActiveChunkId(pendingChunkId.current)
+      pendingChunkId.current = null
+    } else {
+      setActiveChunkId(null)
+    }
   }, [selectedId])
+
+  const focusCitation = (citation: Citation) => {
+    const target = sourceFiles.find((f) => f.name === citation.fileName)
+    if (!target) return
+    if (target.id === selectedId) {
+      setActiveChunkId(citation.chunkId)
+    } else {
+      pendingChunkId.current = citation.chunkId
+      setSelectedId(target.id)
+    }
+  }
 
   return (
     <div className="flex h-screen flex-col bg-[#f7f7f8] text-gray-900">
@@ -68,6 +86,7 @@ export default function NotebookApp() {
             activeChunkId={activeChunkId}
             onHoverChunk={setHoveredChunkId}
             onSelectChunk={setActiveChunkId}
+            onCitationClick={focusCitation}
           />
         </div>
       </div>

@@ -1,0 +1,199 @@
+{
+  "source": "claude stuff.pdf",
+  "page": 1,
+  "method": "manual-image-pdf-highlights",
+  "params": {
+    "coordinateSpace": "normalized-page",
+    "sourcePageSize": {
+      "width": 612,
+      "height": 792
+    }
+  },
+  "chunks": [
+    {
+      "id": "claude-stuff-c01",
+      "index": 0,
+      "page": 1,
+      "start": 0,
+      "end": 42,
+      "length": 42,
+      "text": "Claude Fable 5 and Claude Mythos 5 launch announcement.",
+      "manualHighlights": [
+        {
+          "pageNumber": 1,
+          "rects": [
+            { "left": 0.1536, "top": 0.1872, "width": 0.6949, "height": 0.036 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c02",
+      "index": 1,
+      "page": 2,
+      "start": 43,
+      "end": 151,
+      "length": 108,
+      "text": "Fable 5 ships with safeguards so harmful cybersecurity queries receive safer responses from Opus 4.8.",
+      "manualHighlights": [
+        {
+          "pageNumber": 2,
+          "rects": [
+            { "left": 0.5568, "top": 0.1796, "width": 0.3092, "height": 0.0224 },
+            { "left": 0.0833, "top": 0.2042, "width": 0.6144, "height": 0.0224 },
+            { "left": 0.0833, "top": 0.2544, "width": 0.4444, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c03",
+      "index": 2,
+      "page": 2,
+      "start": 152,
+      "end": 262,
+      "length": 110,
+      "text": "Claude Mythos 5 is the same underlying model with safeguards lifted for selected cyberdefenders.",
+      "manualHighlights": [
+        {
+          "pageNumber": 2,
+          "rects": [
+            { "left": 0.5748, "top": 0.3444, "width": 0.2451, "height": 0.0224 },
+            { "left": 0.6671, "top": 0.4195, "width": 0.2467, "height": 0.0224 },
+            { "left": 0.0833, "top": 0.4448, "width": 0.3742, "height": 0.0227 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c04",
+      "index": 3,
+      "page": 6,
+      "start": 263,
+      "end": 377,
+      "length": 114,
+      "text": "Fable 5 stays focused across millions of tokens and uses its own notes to improve long-running task performance.",
+      "manualHighlights": [
+        {
+          "pageNumber": 6,
+          "rects": [
+            { "left": 0.0825, "top": 0.5426, "width": 0.3088, "height": 0.0224 },
+            { "left": 0.5919, "top": 0.5426, "width": 0.2749, "height": 0.0224 },
+            { "left": 0.5788, "top": 0.5682, "width": 0.2459, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c05",
+      "index": 4,
+      "page": 10,
+      "start": 378,
+      "end": 494,
+      "length": 116,
+      "text": "GitHub describes Fable 5 as a real step forward for long-horizon coding tasks and agentic workflows.",
+      "manualHighlights": [
+        {
+          "pageNumber": 10,
+          "rects": [
+            { "left": 0.5429, "top": 0.1124, "width": 0.3158, "height": 0.0224 },
+            { "left": 0.5429, "top": 0.137, "width": 0.2798, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c06",
+      "index": 5,
+      "page": 10,
+      "start": 495,
+      "end": 624,
+      "length": 129,
+      "text": "New safeguards are cautious by design, with some benign requests triggering classifiers while false positives are reduced over time.",
+      "manualHighlights": [
+        {
+          "pageNumber": 10,
+          "rects": [
+            { "left": 0.2819, "top": 0.827, "width": 0.4657, "height": 0.0221 },
+            { "left": 0.4918, "top": 0.8763, "width": 0.2659, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c07",
+      "index": 6,
+      "page": 15,
+      "start": 625,
+      "end": 749,
+      "length": 124,
+      "text": "Distillation attempts to extract Claude capabilities for competing models are flagged by the safeguards.",
+      "manualHighlights": [
+        {
+          "pageNumber": 15,
+          "rects": [
+            { "left": 0.3121, "top": 0.4088, "width": 0.4575, "height": 0.0224 },
+            { "left": 0.0833, "top": 0.4334, "width": 0.4984, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c08",
+      "index": 7,
+      "page": 15,
+      "start": 750,
+      "end": 883,
+      "length": 133,
+      "text": "A new data-retention policy requires 30-day retention for Mythos-class traffic across first- and third-party surfaces.",
+      "manualHighlights": [
+        {
+          "pageNumber": 15,
+          "rects": [
+            { "left": 0.0833, "top": 0.6155, "width": 0.2692, "height": 0.0224 },
+            { "left": 0.6021, "top": 0.6155, "width": 0.3133, "height": 0.0224 },
+            { "left": 0.0833, "top": 0.6657, "width": 0.4743, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c09",
+      "index": 8,
+      "page": 16,
+      "start": 884,
+      "end": 1008,
+      "length": 124,
+      "text": "Fable 5 is broadly available, while Mythos 5 is restricted to trusted partners and selected biology researchers.",
+      "manualHighlights": [
+        {
+          "pageNumber": 16,
+          "rects": [
+            { "left": 0.4387, "top": 0.4801, "width": 0.3971, "height": 0.0186 },
+            { "left": 0.0833, "top": 0.5047, "width": 0.3342, "height": 0.0224 },
+            { "left": 0.5368, "top": 0.5303, "width": 0.3378, "height": 0.0224 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-stuff-c10",
+      "index": 9,
+      "page": 17,
+      "start": 1009,
+      "end": 1120,
+      "length": 111,
+      "text": "Mythos-class models sit above the Opus class, with Claude Mythos Preview released through Project Glasswing.",
+      "manualHighlights": [
+        {
+          "pageNumber": 17,
+          "rects": [
+            { "left": 0.5167, "top": 0.2598, "width": 0.3309, "height": 0.0215 },
+            { "left": 0.6663, "top": 0.3311, "width": 0.1589, "height": 0.0177 }
+          ]
+        }
+      ]
+    }
+  ],
+  "fullText": "Claude Fable 5 and Claude Mythos 5 launch announcement.\n\nFable 5 ships with safeguards so harmful cybersecurity queries receive safer responses from Opus 4.8.\n\nClaude Mythos 5 is the same underlying model with safeguards lifted for selected cyberdefenders.\n\nFable 5 stays focused across millions of tokens and uses its own notes to improve long-running task performance.\n\nGitHub describes Fable 5 as a real step forward for long-horizon coding tasks and agentic workflows.\n\nNew safeguards are cautious by design, with some benign requests triggering classifiers while false positives are reduced over time.\n\nDistillation attempts to extract Claude capabilities for competing models are flagged by the safeguards.\n\nA new data-retention policy requires 30-day retention for Mythos-class traffic across first- and third-party surfaces.\n\nFable 5 is broadly available, while Mythos 5 is restricted to trusted partners and selected biology researchers.\n\nMythos-class models sit above the Opus class, with Claude Mythos Preview released through Project Glasswing."
+}

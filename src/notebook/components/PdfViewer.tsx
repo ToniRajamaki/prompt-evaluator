@@ -17,6 +17,7 @@ interface PdfViewerProps {
 }
 
 const SCALE = 1.4
+type ChunkHighlightEntry = ChunkRectsByPage[number][number]
 
 export default function PdfViewer({
   url,
@@ -37,7 +38,10 @@ export default function PdfViewer({
     return m
   }, [chunks])
 
-  // Load + render PDF
+  // Load PDF, lay out placeholder pages, and lazily rasterize only the pages
+  // near the viewport. Rendering every page of a large book (hundreds of pages)
+  // into its own canvas blows past the browser's per-tab canvas memory budget,
+  // so we virtualize: render on scroll-in, free canvases on scroll-out.
   useEffect(() => {
     let cancelled = false
     const scroll = scrollRef.current
@@ -51,12 +55,18 @@ export default function PdfViewer({
     setLoading(true)
     setHighlights({})
 
+    const renderedPages = new Set<number>()
+    const renderingPages = new Set<number>()
+    let cleanupScroll: (() => void) | null = null
+
     const loadingTask = pdfjsLib.getDocument({ url })
 
     loadingTask.promise
       .then(async (pdf) => {
         const viewports: Record<number, pdfjsLib.PageViewport> = {}
 
+        // Build correctly-sized placeholders for every page. getPage/getViewport
+        // is cheap (no rasterization), so this keeps scroll height accurate.
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           if (cancelled) return
           const page = await pdf.getPage(pageNum)
@@ -70,28 +80,92 @@ export default function PdfViewer({
           wrapper.style.height = `${viewport.height}px`
           wrapper.setAttribute('data-page', String(pageNum))
 
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          if (!ctx) continue
-
-          const dpr = window.devicePixelRatio || 1
-          canvas.width = viewport.width * dpr
-          canvas.height = viewport.height * dpr
-          canvas.style.width = `${viewport.width}px`
-          canvas.style.height = `${viewport.height}px`
-          canvas.className = 'block'
-          ctx.scale(dpr, dpr)
-
-          wrapper.appendChild(canvas)
           if (pagesHost) pagesHost.appendChild(wrapper)
           pageRefs.current.set(pageNum, wrapper)
-
-          await page.render({ canvasContext: ctx, viewport, canvas }).promise
         }
 
         if (cancelled) return
         setLoading(false)
 
+        const renderPage = async (pageNum: number) => {
+          if (cancelled || renderedPages.has(pageNum) || renderingPages.has(pageNum))
+            return
+          const wrapper = pageRefs.current.get(pageNum)
+          const viewport = viewports[pageNum]
+          if (!wrapper || !viewport) return
+          renderingPages.add(pageNum)
+          try {
+            const page = await pdf.getPage(pageNum)
+            if (cancelled) return
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return
+
+            const dpr = window.devicePixelRatio || 1
+            canvas.width = viewport.width * dpr
+            canvas.height = viewport.height * dpr
+            canvas.style.width = `${viewport.width}px`
+            canvas.style.height = `${viewport.height}px`
+            canvas.className = 'block'
+            canvas.setAttribute('data-page-canvas', '')
+            ctx.scale(dpr, dpr)
+
+            // Insert behind any highlight overlay layer.
+            wrapper.insertBefore(canvas, wrapper.firstChild)
+            await page.render({ canvasContext: ctx, viewport, canvas }).promise
+            renderedPages.add(pageNum)
+          } catch (err) {
+            // Surface unexpected render failures; ignore cancellations.
+            if (!cancelled) console.error(`PDF page ${pageNum} render failed`, err)
+          } finally {
+            renderingPages.delete(pageNum)
+          }
+        }
+
+        const unrenderPage = (pageNum: number) => {
+          const wrapper = pageRefs.current.get(pageNum)
+          if (!wrapper) return
+          const c = wrapper.querySelector('[data-page-canvas]')
+          if (c) c.remove()
+          renderedPages.delete(pageNum)
+        }
+
+        // Deterministic virtualization driven by scroll position: rasterize the
+        // pages whose wrappers fall within the viewport (plus a margin) and free
+        // the rest so we never hold more than a handful of canvases at once.
+        const MARGIN = 1500
+        const updateVisible = () => {
+          if (cancelled) return
+          const top = scroll.scrollTop
+          const bottom = top + scroll.clientHeight
+          for (let n = 1; n <= pdf.numPages; n++) {
+            const w = pageRefs.current.get(n)
+            if (!w) continue
+            const wTop = w.offsetTop
+            const wBottom = wTop + w.offsetHeight
+            const near = wBottom >= top - MARGIN && wTop <= bottom + MARGIN
+            if (near) void renderPage(n)
+            else unrenderPage(n)
+          }
+        }
+
+        let raf = 0
+        const onScroll = () => {
+          if (raf) return
+          raf = requestAnimationFrame(() => {
+            raf = 0
+            updateVisible()
+          })
+        }
+        scroll.addEventListener('scroll', onScroll, { passive: true })
+        cleanupScroll = () => {
+          scroll.removeEventListener('scroll', onScroll)
+          if (raf) cancelAnimationFrame(raf)
+        }
+        updateVisible()
+
+        // Highlights are a text-only pass (no rasterization), so we can compute
+        // them for the whole document up front without the memory blow-up.
         if (chunks?.length) {
           const map = await computeChunkHighlights(pdf, chunks, viewports)
           if (!cancelled) setHighlights(map)
@@ -105,6 +179,7 @@ export default function PdfViewer({
 
     return () => {
       cancelled = true
+      cleanupScroll?.()
       loadingTask.destroy()
     }
   }, [url, chunks])
@@ -184,6 +259,9 @@ function useOverlayPainter({
 }: OverlaysProps) {
   useEffect(() => {
     const cleanups: Array<() => void> = []
+    const focusedIds = new Set(
+      [activeChunkId, hoveredChunkId].filter((id): id is string => Boolean(id)),
+    )
 
     for (const [pageStr, entries] of Object.entries(highlights)) {
       const pageNum = Number(pageStr)
@@ -193,6 +271,12 @@ function useOverlayPainter({
       // Remove old overlay layer
       const existing = wrapper.querySelector('[data-overlay-layer]')
       if (existing) existing.remove()
+      if (!focusedIds.size) continue
+
+      const visibleEntries = (entries as ChunkHighlightEntry[]).filter((entry) =>
+        focusedIds.has(entry.chunkId),
+      )
+      if (!visibleEntries.length) continue
 
       const layer = document.createElement('div')
       layer.setAttribute('data-overlay-layer', '')
@@ -200,14 +284,11 @@ function useOverlayPainter({
       layer.style.inset = '0'
       layer.style.pointerEvents = 'none'
 
-      for (const entry of entries) {
+      for (const entry of visibleEntries) {
         const idx = chunkIndexById.get(entry.chunkId) ?? 0
         const color = colorFor(idx)
         const isHovered = hoveredChunkId === entry.chunkId
         const isActive = activeChunkId === entry.chunkId
-        const isDimmed =
-          (hoveredChunkId && !isHovered) ||
-          (activeChunkId && !isActive && !hoveredChunkId)
 
         for (const rect of entry.rects) {
           const div = document.createElement('div')
@@ -227,9 +308,6 @@ function useOverlayPainter({
           if (isHovered) {
             div.style.boxShadow = `0 0 0 2px ${color.ring}, 0 2px 6px rgba(0,0,0,0.15)`
             div.style.filter = 'brightness(1.05)'
-          }
-          if (isDimmed) {
-            div.style.opacity = '0.25'
           }
           div.title = `Chunk ${idx + 1}`
           div.addEventListener('click', () => onChunkClick?.(entry.chunkId))
