@@ -18,7 +18,7 @@ export default function ChunksPanel({
 }: ChunksPanelProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+      <div className="border-b border-gray-200 bg-gray-50/60 px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Chunks</h2>
@@ -29,7 +29,7 @@ export default function ChunksPanel({
           {activeChunkId && (
             <button
               type="button"
-              className="text-xs text-gray-500 hover:text-gray-900"
+              className="rounded-md px-2 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
               onClick={() => onSelect(null)}
             >
               Clear
@@ -107,7 +107,7 @@ function ChunkCard({
             : undefined,
         opacity: isDimmed ? 0.55 : 1,
       }}
-      className={`block w-full rounded-md border border-gray-200 bg-white p-3 text-left transition hover:border-gray-300 ${
+      className={`block w-full rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:border-gray-300 hover:shadow ${
         isActive ? 'bg-gray-50' : ''
       }`}
     >

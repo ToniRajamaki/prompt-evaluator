@@ -117,18 +117,18 @@ export default function SourcesTab({ selectedId, onSelect }: SourcesTabProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 p-2">
+    <div className="flex flex-col gap-3 p-3">
       <DropZone />
 
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
           Files
         </span>
         <button
           type="button"
           onClick={createFolder}
           title="New folder"
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z" />
@@ -145,8 +145,8 @@ export default function SourcesTab({ selectedId, onSelect }: SourcesTabProps) {
         }}
         onDragLeave={() => setRootDragOver(false)}
         onDrop={handleRootDrop}
-        className={`min-h-[60px] rounded ${
-          rootDragOver ? 'bg-blue-50 ring-1 ring-blue-200' : ''
+        className={`min-h-[60px] rounded-lg ${
+          rootDragOver ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''
         }`}
       >
         <SourceTree

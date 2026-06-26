@@ -35,8 +35,10 @@ export default function SourceItem({
       draggable
       onDragStart={handleDragStart}
       onClick={() => onSelect(source.id)}
-      className={`group flex h-7 cursor-pointer items-center gap-1.5 rounded px-1 text-sm ${
-        active ? 'bg-blue-100 text-blue-900' : 'hover:bg-gray-100'
+      className={`group flex h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm transition ${
+        active
+          ? 'bg-indigo-50 text-indigo-900 ring-1 ring-inset ring-indigo-100'
+          : 'text-gray-700 hover:bg-gray-100'
       }`}
       style={{ paddingLeft: depth * INDENT + 22 }}
       title={source.name}
@@ -58,8 +60,8 @@ export default function SourceItem({
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <path d="M14 2v6h6" />
       </svg>
-      <span className="min-w-0 flex-1 truncate text-gray-800">{source.name}</span>
-      <span className="shrink-0 text-[11px] uppercase text-gray-400 group-hover:text-gray-500">
+      <span className="min-w-0 flex-1 truncate">{source.name}</span>
+      <span className="shrink-0 rounded bg-gray-100 px-1 text-[10px] font-medium uppercase text-gray-400 group-hover:text-gray-500">
         {source.kind}
       </span>
     </div>

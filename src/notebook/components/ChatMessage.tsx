@@ -9,10 +9,10 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-lg rounded px-3 py-2 text-sm ${
+        className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed shadow-sm ${
           isUser
-            ? 'bg-gray-800 text-white'
-            : 'border border-gray-200 bg-white text-gray-800'
+            ? 'rounded-2xl rounded-br-md bg-indigo-600 text-white'
+            : 'rounded-2xl rounded-bl-md border border-gray-200 bg-white text-gray-700'
         }`}
       >
         {message.text}
