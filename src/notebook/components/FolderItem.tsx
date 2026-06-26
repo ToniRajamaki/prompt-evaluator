@@ -74,8 +74,8 @@ export default function FolderItem({
       onDragLeave={() => onDragOver(null)}
       onDrop={handleDrop}
       onClick={() => !editing && onToggleExpand(folder.id)}
-      className={`group flex h-7 cursor-pointer select-none items-center gap-1 rounded px-1 text-sm ${
-        isDragOver ? 'bg-blue-100 ring-1 ring-blue-300' : 'hover:bg-gray-100'
+      className={`group flex h-8 cursor-pointer select-none items-center gap-1 rounded-md px-1.5 text-sm transition ${
+        isDragOver ? 'bg-indigo-50 ring-1 ring-indigo-200' : 'hover:bg-gray-100'
       }`}
       style={{ paddingLeft: depth * INDENT + 4 }}
     >
