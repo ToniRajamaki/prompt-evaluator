@@ -37,6 +37,7 @@ export default function NotebookApp() {
     sourceFiles[0]?.id ?? null,
   )
   const [leftWidth, setLeftWidth] = useState(288)
+  const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightWidth, setRightWidth] = useState(384)
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null)
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null)
@@ -130,15 +131,26 @@ export default function NotebookApp() {
 
       <div className="flex flex-1 overflow-hidden p-3">
         <aside
-          className="flex shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-          style={{ width: leftWidth }}
+          className={`flex shrink-0 flex-col rounded-xl border border-gray-200 bg-white shadow-sm transition-[width] duration-150 ${
+            leftCollapsed ? 'overflow-visible' : 'overflow-hidden'
+          }`}
+          style={{ width: leftCollapsed ? 56 : leftWidth }}
         >
-          <Sidebar selectedId={selectedId} onSelect={setSelectedId} />
+          <Sidebar
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            collapsed={leftCollapsed}
+            onToggleCollapse={() => setLeftCollapsed((v) => !v)}
+          />
         </aside>
-        <ResizeHandle
-          label="Resize sources panel"
-          onPointerDown={(e) => beginResize('left', e)}
-        />
+        {leftCollapsed ? (
+          <div className="w-2 shrink-0" />
+        ) : (
+          <ResizeHandle
+            label="Resize sources panel"
+            onPointerDown={(e) => beginResize('left', e)}
+          />
+        )}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <FileViewer
             file={selected}

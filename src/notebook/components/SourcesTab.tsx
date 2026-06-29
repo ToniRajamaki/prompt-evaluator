@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import type { DragEvent } from 'react'
-import { pdfSources as initialSources, sourceFolders as initialFolders } from '../mockData'
 import type { PdfSource, SourceFolder, SourceNode } from '../types'
 import DropZone from './DropZone'
 import SourceTree from './SourceTree'
@@ -44,13 +43,22 @@ function isDescendant(
 interface SourcesTabProps {
   selectedId: string | null
   onSelect: (id: string) => void
+  folders: SourceFolder[]
+  setFolders: React.Dispatch<React.SetStateAction<SourceFolder[]>>
+  sources: PdfSource[]
+  setSources: React.Dispatch<React.SetStateAction<PdfSource[]>>
 }
 
-export default function SourcesTab({ selectedId, onSelect }: SourcesTabProps) {
-  const [folders, setFolders] = useState<SourceFolder[]>(initialFolders)
-  const [sources, setSources] = useState<PdfSource[]>(initialSources)
+export default function SourcesTab({
+  selectedId,
+  onSelect,
+  folders,
+  setFolders,
+  sources,
+  setSources,
+}: SourcesTabProps) {
   const [expanded, setExpanded] = useState<Set<string>>(
-    () => new Set(initialFolders.map((f) => f.id)),
+    () => new Set(folders.map((f) => f.id)),
   )
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [rootDragOver, setRootDragOver] = useState(false)
