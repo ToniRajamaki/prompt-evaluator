@@ -4,6 +4,7 @@ import { pdfSources as initialSources, sourceFolders as initialFolders } from '.
 import type { PdfSource, SourceFolder, SourceNode } from '../types'
 import DropZone from './DropZone'
 import SourceTree from './SourceTree'
+import ContextSection from './ContextSection'
 
 function buildTree(
   folders: SourceFolder[],
@@ -55,8 +56,13 @@ export default function SourcesTab({ selectedId, onSelect }: SourcesTabProps) {
   const [rootDragOver, setRootDragOver] = useState(false)
 
   const tree = useMemo(
-    () => buildTree(folders, sources, null),
+    () => buildTree(folders, sources.filter((s) => !s.selected), null),
     [folders, sources],
+  )
+
+  const contextSources = useMemo(
+    () => sources.filter((s) => s.selected),
+    [sources],
   )
 
   const toggleExpand = (id: string) =>
@@ -117,52 +123,74 @@ export default function SourcesTab({ selectedId, onSelect }: SourcesTabProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-3">
-      <DropZone />
+    <div className="flex h-full flex-col">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+            Files
+          </span>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              title="Add source"
+              className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add source
+            </button>
+            <button
+              type="button"
+              onClick={createFolder}
+              title="New folder"
+              className="flex items-center justify-center rounded-md p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z" />
+                <path d="M12 11v6M9 14h6" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-          Files
-        </span>
-        <button
-          type="button"
-          onClick={createFolder}
-          title="New folder"
-          className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setRootDragOver(true)
+          }}
+          onDragLeave={() => setRootDragOver(false)}
+          onDrop={handleRootDrop}
+          className={`min-h-[60px] rounded-lg ${
+            rootDragOver ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''
+          }`}
         >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z" />
-            <path d="M12 11v6M9 14h6" />
-          </svg>
-          New folder
-        </button>
-      </div>
+          <SourceTree
+            nodes={tree}
+            depth={0}
+            expanded={expanded}
+            dragOverId={dragOverId}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            onToggleExpand={toggleExpand}
+            onToggleSelect={toggleSelect}
+            onMove={move}
+            onRenameFolder={renameFolder}
+            onDeleteFolder={deleteFolder}
+            onDragOver={setDragOverId}
+          />
+        </div>
 
-      <div
-        onDragOver={(e) => {
-          e.preventDefault()
-          setRootDragOver(true)
-        }}
-        onDragLeave={() => setRootDragOver(false)}
-        onDrop={handleRootDrop}
-        className={`min-h-[60px] rounded-lg ${
-          rootDragOver ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''
-        }`}
-      >
-        <SourceTree
-          nodes={tree}
-          depth={0}
-          expanded={expanded}
-          dragOverId={dragOverId}
+        <ContextSection
+          sources={contextSources}
           selectedId={selectedId}
           onSelect={onSelect}
-          onToggleExpand={toggleExpand}
-          onToggleSelect={toggleSelect}
-          onMove={move}
-          onRenameFolder={renameFolder}
-          onDeleteFolder={deleteFolder}
-          onDragOver={setDragOverId}
+          onRemove={toggleSelect}
         />
+      </div>
+
+      <div className="border-t border-gray-100 p-3">
+        <DropZone />
       </div>
     </div>
   )
