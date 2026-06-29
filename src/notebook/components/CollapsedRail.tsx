@@ -89,7 +89,7 @@ export default function CollapsedRail({
   const otherSources = sources.filter((s) => !s.selected)
 
   return (
-    <div className="flex flex-1 flex-col overflow-y-auto overflow-x-visible">
+    <div className="flex flex-1 flex-col overflow-visible">
       <ul className="flex flex-col items-center gap-1 py-3">
         {otherSources.map((source) => (
           <RailItem
