@@ -43,13 +43,6 @@ export default function SourceItem({
       style={{ paddingLeft: depth * INDENT + 22 }}
       title={source.name}
     >
-      <input
-        type="checkbox"
-        checked={source.selected}
-        onChange={() => onToggleSelect(source.id)}
-        className="h-3.5 w-3.5 shrink-0"
-        onClick={(e) => e.stopPropagation()}
-      />
       <svg
         className={`h-3.5 w-3.5 shrink-0 ${iconColor[source.kind]}`}
         viewBox="0 0 24 24"
@@ -64,6 +57,35 @@ export default function SourceItem({
       <span className="shrink-0 rounded bg-gray-100 px-1 text-[10px] font-medium uppercase text-gray-400 group-hover:text-gray-500">
         {source.kind}
       </span>
+      {source.selected ? (
+        <button
+          type="button"
+          title="Remove from context"
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleSelect(source.id)
+          }}
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-indigo-500 transition hover:bg-indigo-100 hover:text-indigo-700"
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M5 12h14" />
+          </svg>
+        </button>
+      ) : (
+        <button
+          type="button"
+          title="Add to context"
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleSelect(source.id)
+          }}
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-400 opacity-0 transition hover:bg-indigo-100 hover:text-indigo-600 group-hover:opacity-100"
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
