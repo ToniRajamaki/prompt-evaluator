@@ -11,9 +11,14 @@ import TypingDots from './TypingDots'
 interface ChatPanelProps {
   chunkSet: ChunkSet | null
   onCitationClick?: (citation: Citation) => void
+  onSourceClick?: (fileName: string) => void
 }
 
-export default function ChatPanel({ chunkSet, onCitationClick }: ChatPanelProps) {
+export default function ChatPanel({
+  chunkSet,
+  onCitationClick,
+  onSourceClick,
+}: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -99,6 +104,7 @@ export default function ChatPanel({ chunkSet, onCitationClick }: ChatPanelProps)
             key={message.id}
             message={message}
             onCitationClick={onCitationClick}
+            onSourceClick={onSourceClick}
           />
         ))}
         {loading && (

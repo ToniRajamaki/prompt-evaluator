@@ -12,6 +12,7 @@ interface RightPanelProps {
   onHoverChunk: (id: string | null) => void
   onSelectChunk: (id: string | null) => void
   onCitationClick?: (citation: Citation) => void
+  onSourceClick?: (fileName: string) => void
 }
 
 export default function RightPanel({
@@ -21,6 +22,7 @@ export default function RightPanel({
   onHoverChunk,
   onSelectChunk,
   onCitationClick,
+  onSourceClick,
 }: RightPanelProps) {
   const [tab, setTab] = useState<Tab>('chat')
   const showChunks = Boolean(chunkSet)
@@ -66,7 +68,11 @@ export default function RightPanel({
             onSelect={onSelectChunk}
           />
         ) : (
-          <ChatPanel chunkSet={chunkSet} onCitationClick={onCitationClick} />
+          <ChatPanel
+            chunkSet={chunkSet}
+            onCitationClick={onCitationClick}
+            onSourceClick={onSourceClick}
+          />
         )}
       </div>
     </div>

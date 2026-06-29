@@ -42,6 +42,14 @@ export default function NotebookApp() {
     }
   }
 
+  const focusSource = (fileName: string) => {
+    const target = sourceFiles.find((f) => f.name === fileName)
+    if (!target) return
+    pendingChunkId.current = null
+    setActiveChunkId(null)
+    setSelectedId(target.id)
+  }
+
   return (
     <div className="flex h-screen flex-col bg-[#f7f7f8] text-gray-900">
       <header className="flex items-center gap-3 border-b border-gray-200 bg-white/80 px-5 py-3 backdrop-blur">
@@ -87,6 +95,7 @@ export default function NotebookApp() {
             onHoverChunk={setHoveredChunkId}
             onSelectChunk={setActiveChunkId}
             onCitationClick={focusCitation}
+            onSourceClick={focusSource}
           />
         </div>
       </div>
