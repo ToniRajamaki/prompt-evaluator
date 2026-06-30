@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { ChatMessage as ChatMessageType, Citation } from '../types'
 import CitationPill from './CitationPill'
 
@@ -17,6 +18,26 @@ function sourceIconColor(kind: string): string {
   if (kind === 'pdf') return 'text-rose-500'
   if (kind === 'md') return 'text-sky-500'
   return 'text-gray-500'
+}
+
+interface ChatMarkdownProps {
+  children: string
+  tone?: 'assistant' | 'user'
+}
+
+function ChatMarkdown({ children, tone = 'assistant' }: ChatMarkdownProps) {
+  const toneClasses =
+    tone === 'user'
+      ? 'prose-p:text-gray-800 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-indigo-700'
+      : 'prose-p:text-gray-700 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-indigo-700'
+
+  return (
+    <div
+      className={`prose prose-sm max-w-none break-words prose-p:my-1.5 prose-pre:my-2 prose-pre:whitespace-pre-wrap prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-0.5 prose-table:my-2 first:prose-p:mt-0 last:prose-p:mb-0 ${toneClasses}`}
+    >
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+    </div>
+  )
 }
 
 export default function ChatMessage({
@@ -38,8 +59,8 @@ export default function ChatMessage({
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-gray-100 px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-gray-800">
-          {message.text}
+        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-gray-100 px-3.5 py-2.5 text-sm leading-relaxed text-gray-800">
+          <ChatMarkdown tone="user">{message.text}</ChatMarkdown>
         </div>
       </div>
     )
@@ -124,23 +145,20 @@ export default function ChatMessage({
               </details>
             )}
             {message.paragraphs!.map((para) => (
-              <div key={para.id}>
-                <p className="whitespace-pre-wrap">
-                  {para.text}
-                  {para.citations.length > 0 && (
-                    <>
-                      {' '}
-                      {para.citations.map((citation) => (
-                        <CitationPill
-                          key={citation.id}
-                          citation={citation}
-                          onClick={onCitationClick}
-                          variant="inline"
-                        />
-                      ))}
-                    </>
-                  )}
-                </p>
+              <div key={para.id} className="space-y-1">
+                <ChatMarkdown>{para.text}</ChatMarkdown>
+                {para.citations.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {para.citations.map((citation) => (
+                      <CitationPill
+                        key={citation.id}
+                        citation={citation}
+                        onClick={onCitationClick}
+                        variant="inline"
+                      />
+                    ))}
+                  </div>
+                )}
                 {para.citations.length > 0 && (
                   <span className="sr-only">
                     Sources: {para.citations.map((c) => c.fileName).join(', ')}
@@ -150,9 +168,7 @@ export default function ChatMessage({
             ))}
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none prose-pre:my-2 prose-p:my-1.5 first:prose-p:mt-0 last:prose-p:mb-0">
-            <ReactMarkdown>{message.text}</ReactMarkdown>
-          </div>
+          <ChatMarkdown>{message.text}</ChatMarkdown>
         )}
         {streaming && <span className="chat-caret bg-gray-500">&nbsp;</span>}
       </div>
