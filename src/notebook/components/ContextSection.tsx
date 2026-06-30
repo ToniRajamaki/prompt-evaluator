@@ -1,10 +1,12 @@
-import type { PdfSource, SourceKind } from '../types'
+import type { PdfSource, SourceFolder, SourceKind } from '../types'
 
 interface ContextSectionProps {
+  folders: SourceFolder[]
   sources: PdfSource[]
   selectedId: string | null
   onSelect: (id: string) => void
-  onRemove: (id: string) => void
+  onRemoveSource: (id: string) => void
+  onRemoveFolder: (id: string) => void
 }
 
 const iconColor: Record<SourceKind, string> = {
@@ -14,12 +16,15 @@ const iconColor: Record<SourceKind, string> = {
 }
 
 export default function ContextSection({
+  folders,
   sources,
   selectedId,
   onSelect,
-  onRemove,
+  onRemoveSource,
+  onRemoveFolder,
 }: ContextSectionProps) {
-  if (sources.length === 0) return null
+  const total = folders.length + sources.length
+  if (total === 0) return null
 
   return (
     <div className="rounded-lg border border-indigo-200 bg-indigo-50/50">
@@ -31,11 +36,38 @@ export default function ContextSection({
           In context
         </span>
         <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold text-white">
-          {sources.length}
+          {total}
         </span>
       </div>
 
       <ul className="flex flex-col gap-0.5 px-1.5 pb-1.5">
+        {folders.map((folder) => (
+          <li key={folder.id}>
+            <div
+              className="group flex h-7 items-center gap-2 rounded-md px-1.5 text-sm text-indigo-900/80 transition hover:bg-white/70"
+              title={folder.name}
+            >
+              <svg
+                className="h-3.5 w-3.5 shrink-0 text-amber-500"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z" />
+              </svg>
+              <span className="min-w-0 flex-1 truncate font-medium">{folder.name}</span>
+              <button
+                type="button"
+                title="Remove folder from context"
+                onClick={() => onRemoveFolder(folder.id)}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-indigo-400 transition hover:bg-rose-100 hover:text-rose-600"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </li>
+        ))}
         {sources.map((source) => {
           const active = selectedId === source.id
           return (
@@ -65,7 +97,7 @@ export default function ContextSection({
                   title="Remove from context"
                   onClick={(e) => {
                     e.stopPropagation()
-                    onRemove(source.id)
+                    onRemoveSource(source.id)
                   }}
                   className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-indigo-400 transition hover:bg-rose-100 hover:text-rose-600"
                 >

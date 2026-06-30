@@ -24,6 +24,7 @@ export interface SourceFolder {
   id: string
   name: string
   parentId: string | null
+  selected?: boolean
 }
 
 export type SourceNode =

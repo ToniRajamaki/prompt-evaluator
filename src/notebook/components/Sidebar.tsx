@@ -83,10 +83,16 @@ export default function Sidebar({
           </button>
         </div>
         <CollapsedRail
+          folders={folders}
           sources={sources}
           selectedId={selectedId}
           onSelect={onSelect}
           onToggleSelect={toggleSelect}
+          onToggleFolderSelect={(id) =>
+            setFolders((prev) =>
+              prev.map((f) => (f.id === id ? { ...f, selected: !f.selected } : f)),
+            )
+          }
           onUpload={onUpload}
           uploadDisabled={!backendUp}
         />
