@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import SourcesTab from './SourcesTab'
 import ChatHistoryTab from './ChatHistoryTab'
 import CollapsedRail from './CollapsedRail'
 import type { PdfSource, SourceFolder } from '../types'
-import type { DocumentEntry } from '../hooks/useDocuments'
 
 type Tab = 'sources' | 'history'
 
@@ -12,23 +11,12 @@ interface SidebarProps {
   onSelect: (id: string) => void
   collapsed: boolean
   onToggleCollapse: () => void
-  entries: DocumentEntry[]
+  sources: PdfSource[]
+  setSources: React.Dispatch<React.SetStateAction<PdfSource[]>>
   backendUp: boolean
   onUpload?: (file: File) => void | Promise<void>
   onDelete?: (id: string) => void
   onShowInfo?: (id: string) => void
-}
-
-function entryToSource(entry: DocumentEntry, prev?: PdfSource): PdfSource {
-  return {
-    id: entry.id,
-    name: entry.name,
-    kind: entry.kind,
-    url: entry.url,
-    status: entry.status,
-    selected: prev?.selected ?? false,
-    parentId: prev?.parentId ?? null,
-  }
 }
 
 export default function Sidebar({
@@ -36,7 +24,8 @@ export default function Sidebar({
   onSelect,
   collapsed,
   onToggleCollapse,
-  entries,
+  sources,
+  setSources,
   backendUp,
   onUpload,
   onDelete,
@@ -44,16 +33,6 @@ export default function Sidebar({
 }: SidebarProps) {
   const [tab, setTab] = useState<Tab>('sources')
   const [folders, setFolders] = useState<SourceFolder[]>([])
-  const [sources, setSources] = useState<PdfSource[]>([])
-
-  // Keep the sidebar's source list in sync with backend documents, preserving
-  // local-only UI state (context selection + folder placement) across refreshes.
-  useEffect(() => {
-    setSources((prev) => {
-      const byId = new Map(prev.map((s) => [s.id, s]))
-      return entries.map((e) => entryToSource(e, byId.get(e.id)))
-    })
-  }, [entries])
 
   const toggleSelect = (id: string) =>
     setSources((prev) =>

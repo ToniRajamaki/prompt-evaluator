@@ -35,12 +35,12 @@ export interface ChatResult {
 
 export async function sendChat(
   messages: ChatMessage[],
-  documentId?: string | null,
+  documentIds?: string[],
 ): Promise<ChatResult> {
   const res = await fetch(`${API_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: toMessages(messages), documentId }),
+    body: JSON.stringify({ messages: toMessages(messages), documentIds }),
   })
 
   if (!res.ok) {
@@ -59,14 +59,14 @@ export async function sendChat(
 export async function sendChatStream(
   messages: ChatMessage[],
   onDelta: (chunk: string) => void,
-  options: { documentId?: string | null; signal?: AbortSignal } = {},
+  options: { documentIds?: string[]; signal?: AbortSignal } = {},
 ): Promise<BackendCitation[]> {
   const res = await fetch(`${API_URL}/api/chat/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       messages: toMessages(messages),
-      documentId: options.documentId,
+      documentIds: options.documentIds,
     }),
     signal: options.signal,
   })

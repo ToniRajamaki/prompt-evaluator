@@ -21,6 +21,7 @@ import json
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -28,7 +29,7 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
-from pydantic_ai import Agent
+from pydantic_ai import Agent, RunContext
 from pydantic_ai.messages import (
     ModelMessage,
     ModelRequest,
@@ -49,21 +50,57 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 SEED_DEMO_FILES = os.getenv("SEED_DEMO_FILES", "true").lower() in ("1", "true", "yes")
 FILES_DIR = Path(__file__).resolve().parent.parent / "files"
 
+# Minimum cosine similarity (1 - distance) for a chunk to count as relevant.
+# Weak matches below this are dropped so citations stay on-topic.
+RETRIEVAL_MIN_SCORE = float(os.getenv("RETRIEVAL_MIN_SCORE", "0.15"))
+RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", "6"))
+
 SYSTEM_PROMPT = os.getenv(
     "SYSTEM_PROMPT",
-    "You are a helpful assistant inside a document notebook app. Answer the "
-    "user's question using ONLY the provided source excerpts. Cite the excerpts "
-    "you rely on inline using their bracketed ids, e.g. [doc-c01]. If the "
-    "answer is not contained in the sources, say so plainly.",
+    "You are a helpful assistant inside a document notebook app. To answer the "
+    "user's question, first call the `search_documents` tool (one or more "
+    "times, refining the query as needed) to retrieve relevant excerpts from "
+    "the user's sources. Answer using ONLY the returned excerpts and cite the "
+    "ones you rely on inline using their bracketed ids, e.g. [doc-c01]. If the "
+    "search returns nothing relevant, say the documents don't seem to cover "
+    "the question.",
 )
 
-agent: Agent | None = None
+
+@dataclass
+class ChatDeps:
+    """Per-request retrieval context for the agent's search tool."""
+
+    document_ids: list[str] | None
+    collected: list[dict] = field(default_factory=list)
 
 
-def get_agent() -> Agent:
+agent: Agent[ChatDeps, str] | None = None
+
+
+def get_agent() -> Agent[ChatDeps, str]:
     global agent
     if agent is None:
-        agent = Agent(MODEL, system_prompt=SYSTEM_PROMPT)
+        agent = Agent(MODEL, deps_type=ChatDeps, system_prompt=SYSTEM_PROMPT)
+
+        @agent.tool
+        async def search_documents(ctx: RunContext[ChatDeps], query: str) -> str:
+            """Semantic-search the user's in-context documents.
+
+            Returns the most relevant source excerpts, each prefixed with a
+            bracketed id to cite. Scoped to the documents the user selected.
+            """
+            hits = await retrieval.search(
+                query,
+                document_ids=ctx.deps.document_ids,
+                k=RETRIEVAL_K,
+                min_score=RETRIEVAL_MIN_SCORE,
+            )
+            _collect_hits(ctx.deps, hits)
+            if not hits:
+                return "No relevant excerpts were found in the selected sources."
+            return _build_context(hits)
+
     return agent
 
 
@@ -100,6 +137,9 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message]
+    # The documents checked into context. `documentId` is kept for backward
+    # compatibility (single open-document fallback).
+    documentIds: list[str] | None = None
     documentId: str | None = None
 
 
@@ -142,6 +182,24 @@ def _build_context(hits: list[dict]) -> str:
     return "\n\n".join(blocks)
 
 
+def _collect_hits(deps: ChatDeps, hits: list[dict]) -> None:
+    """Accumulate chunks returned by the search tool, de-duped by chunk id."""
+    seen = {h["id"] for h in deps.collected}
+    for h in hits:
+        if h["id"] not in seen:
+            deps.collected.append(h)
+            seen.add(h["id"])
+
+
+def _resolve_document_ids(req: ChatRequest) -> list[str] | None:
+    """Context document ids, falling back to the single open document."""
+    if req.documentIds:
+        return req.documentIds
+    if req.documentId:
+        return [req.documentId]
+    return None
+
+
 def _citations(hits: list[dict]) -> list[CitationOut]:
     return [
         CitationOut(
@@ -159,20 +217,6 @@ def _citations(hits: list[dict]) -> list[CitationOut]:
 def _require_openai() -> None:
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(500, "OPENAI_API_KEY is not set. Fill in backend/.env")
-
-
-def _augmented_prompt(question: str, hits: list[dict]) -> str:
-    if not hits:
-        return (
-            f"{question}\n\n(No relevant source excerpts were found. Tell the "
-            "user the documents don't seem to cover this.)"
-        )
-    context = _build_context(hits)
-    return (
-        f"Question: {question}\n\n"
-        f"Source excerpts:\n{context}\n\n"
-        "Answer the question using only these excerpts and cite the ids you use."
-    )
 
 
 # --- Document endpoints ----------------------------------------------------
@@ -320,16 +364,17 @@ async def chat(req: ChatRequest) -> ChatResponse:
         raise HTTPException(400, "Last message must be from the user.")
 
     question = req.messages[-1].text
-    hits = await retrieval.search(question, document_id=req.documentId)
     history = _to_history(req.messages[:-1])
-    prompt = _augmented_prompt(question, hits)
+    deps = ChatDeps(document_ids=_resolve_document_ids(req))
 
     try:
-        result = await get_agent().run(prompt, message_history=history)
+        result = await get_agent().run(
+            question, message_history=history, deps=deps
+        )
     except Exception as exc:
         raise HTTPException(502, f"Model error: {exc}") from exc
 
-    return ChatResponse(reply=result.output, citations=_citations(hits))
+    return ChatResponse(reply=result.output, citations=_citations(deps.collected))
 
 
 @app.post("/api/chat/stream")
@@ -338,27 +383,27 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
 
     The body is plain text deltas, then a final record separator (\\x1e)
     followed by a JSON object: {"citations": [...]}. The frontend splits on
-    \\x1e to recover the citations after the text.
+    \\x1e to recover the citations after the text. Citations are the chunks the
+    agent's search tool actually returned during the run.
     """
     _require_openai()
     if not req.messages or req.messages[-1].role != "user":
         raise HTTPException(400, "Last message must be from the user.")
 
     question = req.messages[-1].text
-    hits = await retrieval.search(question, document_id=req.documentId)
     history = _to_history(req.messages[:-1])
-    prompt = _augmented_prompt(question, hits)
-    citations = [c.model_dump() for c in _citations(hits)]
+    deps = ChatDeps(document_ids=_resolve_document_ids(req))
 
     async def gen() -> AsyncIterator[str]:
         try:
             async with get_agent().run_stream(
-                prompt, message_history=history
+                question, message_history=history, deps=deps
             ) as result:
                 async for delta in result.stream_text(delta=True):
                     yield delta
         except Exception as exc:
             yield f"\n\n[stream error: {exc}]"
+        citations = [c.model_dump() for c in _citations(deps.collected)]
         yield "\x1e" + json.dumps({"citations": citations})
 
     return StreamingResponse(gen(), media_type="text/plain; charset=utf-8")

@@ -13,6 +13,7 @@ import TypingDots from './TypingDots'
 interface ChatPanelProps {
   chunkSet: ChunkSet | null
   documentId?: string | null
+  contextDocumentIds?: string[]
   onCitationClick?: (citation: Citation) => void
   onSourceClick?: (fileName: string) => void
 }
@@ -22,22 +23,54 @@ function stripCitationTokens(text: string): string {
   return text.replace(/\s*\[[^\]\n]*-c\d+[^\]\n]*\]/gi, '').trim()
 }
 
+/** Matches a bracketed citation token; the inner group may list several ids. */
+const CITATION_TOKEN_RE = /\[([^\]\n]+?)\]/g
+
+/** Citations actually referenced (by inline token) within a block of text. */
+function citedIn(block: string, byId: Map<string, Citation>): Citation[] {
+  const used: Citation[] = []
+  const seen = new Set<string>()
+  CITATION_TOKEN_RE.lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = CITATION_TOKEN_RE.exec(block))) {
+    for (const raw of match[1].split(/[,;]/)) {
+      const citation = byId.get(raw.trim().toLowerCase())
+      if (citation && !seen.has(citation.chunkId)) {
+        used.push(citation)
+        seen.add(citation.chunkId)
+      }
+    }
+  }
+  return used
+}
+
+/**
+ * Split the answer into paragraphs, keeping inline citation tokens in the text
+ * so the renderer can place each reference exactly where the model cited it.
+ * Each paragraph carries only the citations it actually references.
+ */
 function buildParagraphs(
   text: string,
   citations: BackendCitation[],
 ): AnswerParagraph[] {
-  return [
-    {
+  const byId = new Map(
+    citations.map((c) => [c.chunkId.toLowerCase(), toCitation(c)]),
+  )
+  return text
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter((block) => block.length > 0)
+    .map((block) => ({
       id: crypto.randomUUID(),
-      text: stripCitationTokens(text),
-      citations: citations.map(toCitation),
-    },
-  ]
+      text: block,
+      citations: citedIn(block, byId),
+    }))
 }
 
 export default function ChatPanel({
   chunkSet,
   documentId,
+  contextDocumentIds,
   onCitationClick,
   onSourceClick,
 }: ChatPanelProps) {
@@ -90,6 +123,14 @@ export default function ChatPanel({
     reset()
     let full = ''
     try {
+      // Scope retrieval to the documents checked into context; when none are
+      // checked, fall back to the currently-open document.
+      const documentIds =
+        contextDocumentIds && contextDocumentIds.length > 0
+          ? contextDocumentIds
+          : documentId
+            ? [documentId]
+            : []
       const citations = await sendChatStream(
         history,
         (delta) => {
@@ -97,7 +138,7 @@ export default function ChatPanel({
           push(delta)
           if (!streamingActive) setStreamingActive(true)
         },
-        { documentId },
+        { documentIds },
       )
       setMessages((curr) => [
         ...curr,
@@ -197,7 +238,15 @@ export default function ChatPanel({
         </div>
         {chunkSet && (
           <p className="mt-1.5 px-1 text-[11px] text-gray-400">
-            Answers are grounded in {documentId ? 'this document' : 'your documents'} via retrieval.
+            Answers are grounded in{' '}
+            {contextDocumentIds && contextDocumentIds.length > 0
+              ? `your ${contextDocumentIds.length} context source${
+                  contextDocumentIds.length > 1 ? 's' : ''
+                }`
+              : documentId
+                ? 'this document'
+                : 'your documents'}{' '}
+            via retrieval.
           </p>
         )}
       </div>

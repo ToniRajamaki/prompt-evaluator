@@ -7,7 +7,7 @@ import { getChunksForFile } from './data/chunksRegistry'
 import { chunkText } from './chunker'
 import { getDocumentChunks } from './api/documents'
 import { useDocuments, type DocumentEntry } from './hooks/useDocuments'
-import type { Citation, ChunkSet, SourceFile } from './types'
+import type { Citation, ChunkSet, PdfSource, SourceFile } from './types'
 
 type ResizeSide = 'left' | 'right'
 
@@ -39,6 +39,18 @@ function entryToFile(entry: DocumentEntry): SourceFile {
   return { id: entry.id, name: entry.name, url: entry.url, kind: entry.kind }
 }
 
+function entryToSource(entry: DocumentEntry, prev?: PdfSource): PdfSource {
+  return {
+    id: entry.id,
+    name: entry.name,
+    kind: entry.kind,
+    url: entry.url,
+    status: entry.status,
+    selected: prev?.selected ?? false,
+    parentId: prev?.parentId ?? null,
+  }
+}
+
 export default function NotebookApp() {
   const { entries, backendUp, upload, remove } = useDocuments()
 
@@ -50,6 +62,22 @@ export default function NotebookApp() {
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null)
   const [infoId, setInfoId] = useState<string | null>(null)
   const pendingChunkId = useRef<string | null>(null)
+
+  // Source list with local-only UI state (context selection + folder placement),
+  // kept in sync with backend documents. Lifted here so the chat panel can scope
+  // retrieval to the documents the user checked into context.
+  const [sources, setSources] = useState<PdfSource[]>([])
+  useEffect(() => {
+    setSources((prev) => {
+      const byId = new Map(prev.map((s) => [s.id, s]))
+      return entries.map((e) => entryToSource(e, byId.get(e.id)))
+    })
+  }, [entries])
+
+  const contextDocumentIds = useMemo(
+    () => sources.filter((s) => s.selected).map((s) => s.id),
+    [sources],
+  )
 
   // Default the selection to the first document once they load.
   useEffect(() => {
@@ -213,7 +241,8 @@ export default function NotebookApp() {
             onSelect={setSelectedId}
             collapsed={leftCollapsed}
             onToggleCollapse={() => setLeftCollapsed((v) => !v)}
-            entries={entries}
+            sources={sources}
+            setSources={setSources}
             backendUp={backendUp}
             onUpload={(file) => {
               void upload(file)
@@ -252,6 +281,7 @@ export default function NotebookApp() {
           <RightPanel
             chunkSet={chunkSet}
             documentId={selectedEntry?.backed === 'backend' ? selectedEntry.id : null}
+            contextDocumentIds={contextDocumentIds}
             hoveredChunkId={hoveredChunkId}
             activeChunkId={activeChunkId}
             onHoverChunk={setHoveredChunkId}

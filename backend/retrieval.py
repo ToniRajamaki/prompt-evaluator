@@ -11,21 +11,26 @@ from embeddings import embed_query
 
 
 async def search(
-    query: str, document_id: str | None = None, k: int = 6
+    query: str,
+    document_ids: list[str] | None = None,
+    k: int = 6,
+    min_score: float | None = None,
 ) -> list[dict[str, Any]]:
     """Return the top-k chunks most similar to the query.
 
-    When `document_id` is given, retrieval is scoped to that document. Results
-    include a `score` (1 - cosine distance) and the owning document's name.
+    When `document_ids` is given, retrieval is scoped to those documents.
+    Results include a `score` (1 - cosine distance) and the owning document's
+    name. When `min_score` is set, weak matches below that threshold are
+    dropped so only relevant excerpts are returned.
     """
     vector = Vector(await embed_query(query))
 
-    # Placeholder order: score(<=>), [document_id], order-by(<=>), limit.
+    # Placeholder order: score(<=>), [document_ids], order-by(<=>), limit.
     params: list[Any] = [vector]
     scope = ""
-    if document_id:
-        scope = "AND c.document_id = %s"
-        params.append(document_id)
+    if document_ids:
+        scope = "AND c.document_id = ANY(%s)"
+        params.append(list(document_ids))
     params.extend([vector, k])
 
     rows = db.fetch_all(
@@ -42,4 +47,6 @@ async def search(
         """,
         tuple(params),
     )
+    if min_score is not None:
+        rows = [r for r in rows if float(r["score"]) >= min_score]
     return rows

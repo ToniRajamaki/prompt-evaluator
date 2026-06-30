@@ -8,6 +8,7 @@ type Tab = 'chat' | 'chunks'
 interface RightPanelProps {
   chunkSet: ChunkSet | null
   documentId?: string | null
+  contextDocumentIds?: string[]
   hoveredChunkId: string | null
   activeChunkId: string | null
   onHoverChunk: (id: string | null) => void
@@ -19,6 +20,7 @@ interface RightPanelProps {
 export default function RightPanel({
   chunkSet,
   documentId,
+  contextDocumentIds,
   hoveredChunkId,
   activeChunkId,
   onHoverChunk,
@@ -73,6 +75,7 @@ export default function RightPanel({
           <ChatPanel
             chunkSet={chunkSet}
             documentId={documentId}
+            contextDocumentIds={contextDocumentIds}
             onCitationClick={onCitationClick}
             onSourceClick={onSourceClick}
           />

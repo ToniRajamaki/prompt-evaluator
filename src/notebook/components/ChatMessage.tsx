@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import type { ReactNode } from 'react'
 import type { ChatMessage as ChatMessageType, Citation } from '../types'
 import CitationPill from './CitationPill'
 
@@ -40,11 +41,57 @@ function ChatMarkdown({ children, tone = 'assistant' }: ChatMarkdownProps) {
   )
 }
 
+/** Matches a bracketed citation token; the inner group may list several ids. */
+const CITATION_TOKEN_RE = /\[([^\]\n]+?)\]/g
+
+/**
+ * Render answer text, replacing each inline `[chunk-id]` token with a clickable
+ * citation pill placed exactly where the model cited it. Tokens that don't map
+ * to a known citation are left as plain text.
+ */
+function renderWithCitations(
+  text: string,
+  citations: Citation[],
+  onCitationClick?: (citation: Citation) => void,
+): ReactNode[] {
+  const byId = new Map(citations.map((c) => [c.chunkId.toLowerCase(), c]))
+  const nodes: ReactNode[] = []
+  let last = 0
+  let key = 0
+  CITATION_TOKEN_RE.lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = CITATION_TOKEN_RE.exec(text))) {
+    const matched: Citation[] = []
+    const seen = new Set<string>()
+    for (const raw of match[1].split(/[,;]/)) {
+      const citation = byId.get(raw.trim().toLowerCase())
+      if (citation && !seen.has(citation.chunkId)) {
+        matched.push(citation)
+        seen.add(citation.chunkId)
+      }
+    }
+    if (!matched.length) continue
+    if (match.index > last) nodes.push(text.slice(last, match.index))
+    for (const citation of matched) {
+      nodes.push(
+        <CitationPill
+          key={`cite-${key++}`}
+          citation={citation}
+          onClick={onCitationClick}
+          variant="inline"
+        />,
+      )
+    }
+    last = CITATION_TOKEN_RE.lastIndex
+  }
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
 export default function ChatMessage({
   message,
   streaming = false,
   onCitationClick,
-  onSourceClick,
 }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const contextSources = message.paragraphs
@@ -117,9 +164,9 @@ export default function ChatMessage({
                       <button
                         key={source.fileName}
                         type="button"
-                        onClick={() => onSourceClick?.(source.fileName)}
+                        onClick={() => onCitationClick?.(source)}
                         className="group flex h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-100"
-                        title={source.fileName}
+                        title={`${source.fileName} — jump to cited passage`}
                       >
                         <svg
                           className={`h-3.5 w-3.5 shrink-0 ${sourceIconColor(kind)}`}
@@ -145,20 +192,14 @@ export default function ChatMessage({
               </details>
             )}
             {message.paragraphs!.map((para) => (
-              <div key={para.id} className="space-y-1">
-                <ChatMarkdown>{para.text}</ChatMarkdown>
-                {para.citations.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {para.citations.map((citation) => (
-                      <CitationPill
-                        key={citation.id}
-                        citation={citation}
-                        onClick={onCitationClick}
-                        variant="inline"
-                      />
-                    ))}
-                  </div>
-                )}
+              <div key={para.id}>
+                <p className="whitespace-pre-wrap">
+                  {renderWithCitations(
+                    para.text,
+                    para.citations,
+                    onCitationClick,
+                  )}
+                </p>
                 {para.citations.length > 0 && (
                   <span className="sr-only">
                     Sources: {para.citations.map((c) => c.fileName).join(', ')}

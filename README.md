@@ -1,52 +1,79 @@
 # SourceChat
 
-Chat with your documents and get **source-grounded answers** — each cited
-passage is highlighted directly in the original `md`, `txt`, or `pdf`.
+Chat with your documents and get **source-grounded answers** — every cited
+passage is highlighted right in the original `md`, `txt`, or `pdf`.
 
-> The chat is currently **mocked** (no backend yet): answers cite real chunks
-> from the loaded document so the citation/highlight UX works end to end. The
-> highlighting itself is real.
+## What you need first
 
-## How highlighting works
+- **Node.js** (for the frontend)
+- **Python** (for the backend)
+- **Docker Desktop** (for the database)
+- An **OpenAI API key**
 
-Documents are split into overlapping chunks; a citation maps back to a chunk,
-which is highlighted in the viewer.
+# Run it in 3 steps
 
-- **md / txt and text PDFs** — chunk text is matched live against the document
-  text to position highlights.
-- **PDFs** can also ship **precomputed boxes**: normalized `{x0, y0, x1, y1}`
-  coordinates per chunk (relative to the page), extracted offline with PyMuPDF —
-  **no OCR**. The runtime just scales them to the rendered page.
+You need **3 things running**: the database, the backend, and the frontend.
+Open a terminal in the project folder and do the following.
 
-Scanned/image PDFs have no text layer, so they must be given a real text layer
-(or OCR'd in a backend) before positions can be extracted.
-
-## Getting started
+### 1. Start the database
 
 ```bash
-npm install
-npm run dev      # start the dev server
-npm run build    # type-check + production build
-npm run lint     # oxlint
-npm run preview  # preview the build
+docker compose up -d
 ```
 
-## Regenerating PDF chunk data
-
-`*.chunks.json` files under `src/notebook/data/` hold each PDF's chunks and
-highlight boxes. To rebuild the sample PDF + boxes:
+### 2. Start the backend
 
 ```bash
-pip install pymupdf
-python scripts/generate_claude_pdf.py
+cd backend
+pip install -r requirements.txt   
+copy .env.example .env           
+```
+
+Open the new `backend/.env` file and paste your OpenAI key:
+
+```
+OPENAI_API_KEY=sk-your-key-here
+```
+
+Then start the server:
+```bash
+python -m uvicorn main:app --port 8000 --reload
+```
+
+
+
+### 3. Start the frontend
+```bash
+npm install 
+npm run dev
+```
+
+Open the link it prints (e.g. http://localhost:5173) in your browser.
+
+## "Backend is offline"?
+
+Check these, in order:
+
+1. The database is running: `docker compose up -d`.
+2. The backend terminal shows **`Application startup complete.`** If it's stuck
+   on `Waiting for application startup`, your `OPENAI_API_KEY` is probably
+   missing or wrong in `backend/.env`.
+3. The backend is on port **8000**. Test it by opening
+   http://localhost:8000/api/health — you should see `{"status":"ok",...}`.
+
+## Other commands
+
+```bash
+npm run build    # type-check + production build
+npm run lint     # lint with oxlint
+npm run preview  # preview the production build
 ```
 
 ## Project layout
 
-- `src/notebook/` — app UI (viewer, chat, sources panel)
-- `src/notebook/data/*.chunks.json` — per-PDF chunks + normalized highlight boxes
-- `src/notebook/chunker.ts` — runtime chunking for md/txt
-- `files/` — sample source documents
-- `scripts/` — offline data-generation tooling (PyMuPDF)
+- `src/notebook/` — the app UI (document viewer, chat, sources panel)
+- `backend/` — the chat + search server (FastAPI)
+- `files/` — sample documents loaded on first run
+- `scripts/` — offline tooling to rebuild PDF highlight data (PyMuPDF)
 
 Built with React + TypeScript + Vite, Tailwind, and `pdfjs-dist`.
