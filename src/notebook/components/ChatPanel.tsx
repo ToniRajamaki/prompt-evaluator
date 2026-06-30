@@ -1,29 +1,53 @@
 import { useEffect, useRef, useState } from 'react'
 import type {
+  AnswerParagraph,
   ChatMessage as ChatMessageType,
   ChunkSet,
   Citation,
 } from '../types'
-import { sendMockChat } from '../api/mockChat'
+import { sendChatStream, toCitation, type BackendCitation } from '../api/chat'
+import { useStreamingText } from '../hooks/useStreamingText'
 import ChatMessage from './ChatMessage'
 import TypingDots from './TypingDots'
 
 interface ChatPanelProps {
   chunkSet: ChunkSet | null
+  documentId?: string | null
   onCitationClick?: (citation: Citation) => void
   onSourceClick?: (fileName: string) => void
 }
 
+/** Remove inline chunk-id citation tokens (e.g. "[claude-stuff-c01]") from text. */
+function stripCitationTokens(text: string): string {
+  return text.replace(/\s*\[[^\]\n]*-c\d+[^\]\n]*\]/gi, '').trim()
+}
+
+function buildParagraphs(
+  text: string,
+  citations: BackendCitation[],
+): AnswerParagraph[] {
+  return [
+    {
+      id: crypto.randomUUID(),
+      text: stripCitationTokens(text),
+      citations: citations.map(toCitation),
+    },
+  ]
+}
+
 export default function ChatPanel({
   chunkSet,
+  documentId,
   onCitationClick,
   onSourceClick,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [streamingActive, setStreamingActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const { displayed, push, reset } = useStreamingText()
   const scrollRef = useRef<HTMLDivElement>(null)
   const pinnedRef = useRef(true)
 
@@ -43,7 +67,7 @@ export default function ChatPanel({
 
   useEffect(() => {
     maybeScroll()
-  }, [messages, loading])
+  }, [messages, loading, displayed])
 
   const handleSend = async () => {
     const text = input.trim()
@@ -54,29 +78,42 @@ export default function ChatPanel({
       role: 'user',
       text,
     }
+    const history = [...messages, userMessage]
 
-    setMessages((curr) => [...curr, userMessage])
+    setMessages(history)
     setInput('')
     setError(null)
     setLoading(true)
     pinnedRef.current = true
     maybeScroll()
 
+    reset()
+    let full = ''
     try {
-      const answer = await sendMockChat(text, chunkSet)
+      const citations = await sendChatStream(
+        history,
+        (delta) => {
+          full += delta
+          push(delta)
+          if (!streamingActive) setStreamingActive(true)
+        },
+        { documentId },
+      )
       setMessages((curr) => [
         ...curr,
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          text: answer.text,
-          paragraphs: answer.paragraphs,
+          text: stripCitationTokens(full),
+          paragraphs: buildParagraphs(full, citations),
         },
       ])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
       setLoading(false)
+      setStreamingActive(false)
+      reset()
     }
   }
 
@@ -86,6 +123,8 @@ export default function ChatPanel({
       void handleSend()
     }
   }
+
+  const showTyping = loading && !streamingActive
 
   return (
     <main className="flex flex-1 flex-col overflow-hidden">
@@ -107,7 +146,13 @@ export default function ChatPanel({
             onSourceClick={onSourceClick}
           />
         ))}
-        {loading && (
+        {streamingActive && (
+          <ChatMessage
+            message={{ id: 'streaming', role: 'assistant', text: displayed }}
+            streaming
+          />
+        )}
+        {showTyping && (
           <div className="flex justify-start px-1 py-1">
             <TypingDots />
           </div>
@@ -150,6 +195,11 @@ export default function ChatPanel({
             </svg>
           </button>
         </div>
+        {chunkSet && (
+          <p className="mt-1.5 px-1 text-[11px] text-gray-400">
+            Answers are grounded in {documentId ? 'this document' : 'your documents'} via retrieval.
+          </p>
+        )}
       </div>
     </main>
   )

@@ -15,6 +15,8 @@ interface SourceTreeProps {
   onRenameFolder: (id: string, name: string) => void
   onDeleteFolder: (id: string) => void
   onDragOver: (id: string | null) => void
+  onShowInfo?: (id: string) => void
+  onDelete?: (id: string) => void
 }
 
 export default function SourceTree(props: SourceTreeProps) {
@@ -54,6 +56,8 @@ export default function SourceTree(props: SourceTreeProps) {
               onSelect={props.onSelect}
               onToggleSelect={props.onToggleSelect}
               onMove={props.onMove}
+              onShowInfo={props.onShowInfo}
+              onDelete={props.onDelete}
             />
           </li>
         )

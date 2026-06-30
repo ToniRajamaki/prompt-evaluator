@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { PdfSource, SourceKind } from '../types'
 
 interface CollapsedRailProps {
@@ -5,6 +6,8 @@ interface CollapsedRailProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onToggleSelect: (id: string) => void
+  onUpload?: (file: File) => void | Promise<void>
+  uploadDisabled?: boolean
 }
 
 const iconColor: Record<SourceKind, string> = {
@@ -84,9 +87,12 @@ export default function CollapsedRail({
   selectedId,
   onSelect,
   onToggleSelect,
+  onUpload,
+  uploadDisabled,
 }: CollapsedRailProps) {
   const contextSources = sources.filter((s) => s.selected)
   const otherSources = sources.filter((s) => !s.selected)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="flex flex-1 flex-col overflow-visible">
@@ -120,10 +126,26 @@ export default function CollapsedRail({
       )}
 
       <div className="mt-auto flex justify-center border-t border-gray-100 p-2">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,.md,.txt"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = e.target.files
+            if (files && onUpload) {
+              Array.from(files).forEach((f) => void onUpload(f))
+            }
+            if (inputRef.current) inputRef.current.value = ''
+          }}
+        />
         <button
           type="button"
           title="Upload source"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 text-gray-500 transition hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-600"
+          disabled={uploadDisabled}
+          onClick={() => inputRef.current?.click()}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 text-gray-500 transition hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-600 disabled:opacity-50"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 16V4M5 11l7-7 7 7" />
