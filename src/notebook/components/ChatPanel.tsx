@@ -153,10 +153,8 @@ export default function ChatPanel({
           />
         )}
         {showTyping && (
-          <div className="flex justify-start">
-            <div className="rounded border border-gray-200 bg-white px-3 py-2">
-              <TypingDots />
-            </div>
+          <div className="flex justify-start px-1 py-1">
+            <TypingDots />
           </div>
         )}
         {error && (

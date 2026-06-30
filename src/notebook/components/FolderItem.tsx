@@ -113,7 +113,7 @@ export default function FolderItem({
             if (e.key === 'Enter') commit()
             if (e.key === 'Escape') setEditing(false)
           }}
-          className="min-w-0 flex-1 rounded border border-blue-300 px-1 text-sm outline-none"
+          className="min-w-0 flex-1 rounded border border-indigo-300 px-1 text-sm outline-none"
         />
       ) : (
         <span className="min-w-0 flex-1 truncate font-medium text-gray-700">{name}</span>
