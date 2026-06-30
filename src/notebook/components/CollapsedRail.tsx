@@ -1,11 +1,13 @@
 import { useRef } from 'react'
-import type { PdfSource, SourceKind } from '../types'
+import type { PdfSource, SourceFolder, SourceKind } from '../types'
 
 interface CollapsedRailProps {
+  folders: SourceFolder[]
   sources: PdfSource[]
   selectedId: string | null
   onSelect: (id: string) => void
   onToggleSelect: (id: string) => void
+  onToggleFolderSelect: (id: string) => void
   onUpload?: (file: File) => void | Promise<void>
   uploadDisabled?: boolean
 }
@@ -82,14 +84,55 @@ function RailItem({
   )
 }
 
+function RailFolder({
+  folder,
+  onToggleFolderSelect,
+}: {
+  folder: SourceFolder
+  onToggleFolderSelect: (id: string) => void
+}) {
+  return (
+    <li className="group relative">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white ring-1 ring-inset ring-indigo-200">
+        <svg
+          className="h-4 w-4 text-amber-500"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z" />
+        </svg>
+      </div>
+
+      <button
+        type="button"
+        title="Remove folder from context"
+        onClick={() => onToggleFolderSelect(folder.id)}
+        className="absolute -right-0.5 -top-0.5 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-400 text-white shadow group-hover:flex"
+      >
+        <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round">
+          <path d="M5 12h14" />
+        </svg>
+      </button>
+
+      <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+        {folder.name}
+      </span>
+    </li>
+  )
+}
+
 export default function CollapsedRail({
+  folders,
   sources,
   selectedId,
   onSelect,
   onToggleSelect,
+  onToggleFolderSelect,
   onUpload,
   uploadDisabled,
 }: CollapsedRailProps) {
+  const contextFolders = folders.filter((folder) => folder.selected)
   const contextSources = sources.filter((s) => s.selected)
   const otherSources = sources.filter((s) => !s.selected)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -108,11 +151,18 @@ export default function CollapsedRail({
         ))}
       </ul>
 
-      {contextSources.length > 0 && (
+      {contextFolders.length + contextSources.length > 0 && (
         <div className="mx-auto mb-2 flex w-9 flex-col items-center gap-1 rounded-xl border border-indigo-200 bg-indigo-50/60 py-2">
           <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold text-white">
-            {contextSources.length}
+            {contextFolders.length + contextSources.length}
           </span>
+          {contextFolders.map((folder) => (
+            <RailFolder
+              key={folder.id}
+              folder={folder}
+              onToggleFolderSelect={onToggleFolderSelect}
+            />
+          ))}
           {contextSources.map((source) => (
             <RailItem
               key={source.id}

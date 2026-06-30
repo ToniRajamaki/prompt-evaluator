@@ -8,6 +8,7 @@ interface FolderItemProps {
   isOpen: boolean
   isDragOver: boolean
   onToggleExpand: (id: string) => void
+  onToggleSelect: (id: string) => void
   onMove: (nodeId: string, targetFolderId: string | null) => void
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
@@ -22,6 +23,7 @@ export default function FolderItem({
   isOpen,
   isDragOver,
   onToggleExpand,
+  onToggleSelect,
   onMove,
   onRename,
   onDelete,
@@ -133,6 +135,19 @@ export default function FolderItem({
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            title="Add folder to context"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleSelect(folder.id)
+            }}
+            className="rounded p-0.5 text-gray-400 hover:bg-indigo-100 hover:text-indigo-600"
+          >
+            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
           <button

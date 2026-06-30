@@ -40,6 +40,29 @@ function isDescendant(
   return false
 }
 
+function hasAncestor(
+  folders: SourceFolder[],
+  folderId: string | null,
+  predicate: (folder: SourceFolder) => boolean,
+): boolean {
+  let current = folderId
+  while (current) {
+    const folder = folders.find((f) => f.id === current)
+    if (!folder) return false
+    if (predicate(folder)) return true
+    current = folder.parentId
+  }
+  return false
+}
+
+function isSourceInFolder(
+  folders: SourceFolder[],
+  source: PdfSource,
+  folderId: string,
+): boolean {
+  return hasAncestor(folders, source.parentId, (folder) => folder.id === folderId)
+}
+
 interface SourcesTabProps {
   selectedId: string | null
   onSelect: (id: string) => void
@@ -72,14 +95,42 @@ export default function SourcesTab({
   const [rootDragOver, setRootDragOver] = useState(false)
   const addInputRef = useRef<HTMLInputElement>(null)
 
+  const selectedContextFolders = useMemo(
+    () =>
+      folders.filter(
+        (folder) =>
+          folder.selected &&
+          !hasAncestor(folders, folder.parentId, (ancestor) => Boolean(ancestor.selected)),
+      ),
+    [folders],
+  )
+
   const tree = useMemo(
-    () => buildTree(folders, sources.filter((s) => !s.selected), null),
+    () =>
+      buildTree(
+        folders.filter(
+          (folder) =>
+            !folder.selected &&
+            !hasAncestor(folders, folder.parentId, (ancestor) => Boolean(ancestor.selected)),
+        ),
+        sources.filter(
+          (source) =>
+            !source.selected &&
+            !hasAncestor(folders, source.parentId, (folder) => Boolean(folder.selected)),
+        ),
+        null,
+      ),
     [folders, sources],
   )
 
   const contextSources = useMemo(
-    () => sources.filter((s) => s.selected),
-    [sources],
+    () =>
+      sources.filter(
+        (source) =>
+          source.selected &&
+          !hasAncestor(folders, source.parentId, (folder) => Boolean(folder.selected)),
+      ),
+    [folders, sources],
   )
 
   const toggleExpand = (id: string) =>
@@ -94,6 +145,26 @@ export default function SourcesTab({
     setSources((prev) =>
       prev.map((s) => (s.id === id ? { ...s, selected: !s.selected } : s)),
     )
+
+  const toggleFolderSelect = (id: string) => {
+    const shouldSelect = !folders.find((f) => f.id === id)?.selected
+    setFolders((prev) =>
+      prev.map((folder) => {
+        if (folder.id === id) return { ...folder, selected: shouldSelect }
+        if (shouldSelect && isDescendant(prev, folder.id, id)) {
+          return { ...folder, selected: false }
+        }
+        return folder
+      }),
+    )
+    if (shouldSelect) {
+      setSources((prev) =>
+        prev.map((source) =>
+          isSourceInFolder(folders, source, id) ? { ...source, selected: false } : source,
+        ),
+      )
+    }
+  }
 
   const move = (nodeId: string, targetFolderId: string | null) => {
     const isFolder = folders.some((f) => f.id === nodeId)
@@ -207,6 +278,7 @@ export default function SourcesTab({
             onSelect={onSelect}
             onToggleExpand={toggleExpand}
             onToggleSelect={toggleSelect}
+            onToggleFolderSelect={toggleFolderSelect}
             onMove={move}
             onRenameFolder={renameFolder}
             onDeleteFolder={deleteFolder}
@@ -217,10 +289,12 @@ export default function SourcesTab({
         </div>
 
         <ContextSection
+          folders={selectedContextFolders}
           sources={contextSources}
           selectedId={selectedId}
           onSelect={onSelect}
-          onRemove={toggleSelect}
+          onRemoveSource={toggleSelect}
+          onRemoveFolder={toggleFolderSelect}
         />
       </div>
 
