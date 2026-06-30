@@ -1,5 +1,7 @@
 export type SourceKind = 'pdf' | 'md' | 'txt'
 
+export type DocumentStatus = 'pending' | 'processing' | 'ready' | 'error'
+
 export interface SourceFile {
   id: string
   name: string
@@ -15,6 +17,7 @@ export interface PdfSource {
   parentId: string | null
   kind: SourceKind
   url: string
+  status?: DocumentStatus
 }
 
 export interface SourceFolder {

@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import FileViewer from './components/FileViewer'
-import { sourceFiles } from './fileRegistry'
+import FileInfoPanel from './components/FileInfoPanel'
 import { getChunksForFile } from './data/chunksRegistry'
 import { chunkText } from './chunker'
-import type { Citation, ChunkSet } from './types'
+import { getDocumentChunks } from './api/documents'
+import { useDocuments, type DocumentEntry } from './hooks/useDocuments'
+import type { Citation, ChunkSet, SourceFile } from './types'
 
 type ResizeSide = 'left' | 'right'
 
@@ -33,39 +35,71 @@ function ResizeHandle({
   )
 }
 
+function entryToFile(entry: DocumentEntry): SourceFile {
+  return { id: entry.id, name: entry.name, url: entry.url, kind: entry.kind }
+}
+
 export default function NotebookApp() {
-  const [selectedId, setSelectedId] = useState<string | null>(
-    sourceFiles[0]?.id ?? null,
-  )
+  const { entries, backendUp, upload, remove } = useDocuments()
+
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [leftWidth, setLeftWidth] = useState(288)
   const [leftCollapsed, setLeftCollapsed] = useState(false)
   const [rightWidth, setRightWidth] = useState(384)
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null)
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null)
+  const [infoId, setInfoId] = useState<string | null>(null)
   const pendingChunkId = useRef<string | null>(null)
 
-  const selected = sourceFiles.find((f) => f.id === selectedId) ?? null
+  // Default the selection to the first document once they load.
+  useEffect(() => {
+    if (selectedId === null && entries.length > 0) {
+      setSelectedId(entries[0].id)
+    }
+  }, [entries, selectedId])
 
-  // Chunks: PDFs use prebuilt JSON; md/txt are chunked at runtime from their
-  // text (backend postponed). The runtime chunk text/offsets feed both the
-  // chunks panel and the in-document highlight overlays.
+  const selectedEntry = useMemo(
+    () => entries.find((e) => e.id === selectedId) ?? null,
+    [entries, selectedId],
+  )
+  const selectedFile = selectedEntry ? entryToFile(selectedEntry) : null
+  const infoEntry = useMemo(
+    () => entries.find((e) => e.id === infoId) ?? null,
+    [entries, infoId],
+  )
+
+  // Chunks: backend documents fetch their ChunkSet from the API; static demo
+  // files use prebuilt PDF JSON or runtime md/txt chunking.
   const [chunkSet, setChunkSet] = useState<ChunkSet | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    if (!selected) {
-      setChunkSet(null)
-      return
-    }
-    if (selected.kind === 'pdf') {
-      setChunkSet(getChunksForFile(selected.name))
-      return
-    }
     setChunkSet(null)
-    fetch(selected.url)
+    if (!selectedEntry) return
+
+    if (selectedEntry.backed === 'backend') {
+      if (selectedEntry.status !== 'ready') return
+      getDocumentChunks(selectedEntry.id)
+        .then((set) => {
+          if (!cancelled) setChunkSet(set)
+        })
+        .catch(() => {
+          if (!cancelled) setChunkSet(null)
+        })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // Static demo file paths.
+    if (selectedEntry.kind === 'pdf') {
+      setChunkSet(getChunksForFile(selectedEntry.name))
+      return
+    }
+    fetch(selectedEntry.url)
       .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((text) => {
-        if (!cancelled) setChunkSet(chunkText(selected.name, text))
+        if (!cancelled) setChunkSet(chunkText(selectedEntry.name, text))
       })
       .catch(() => {
         if (!cancelled) setChunkSet(null)
@@ -73,7 +107,7 @@ export default function NotebookApp() {
     return () => {
       cancelled = true
     }
-  }, [selected])
+  }, [selectedEntry])
 
   // Reset chunk selection when switching files, but honor a pending citation jump.
   useEffect(() => {
@@ -87,7 +121,7 @@ export default function NotebookApp() {
   }, [selectedId])
 
   const focusCitation = (citation: Citation) => {
-    const target = sourceFiles.find((f) => f.name === citation.fileName)
+    const target = entries.find((f) => f.name === citation.fileName)
     if (!target) return
     if (target.id === selectedId) {
       setActiveChunkId(citation.chunkId)
@@ -98,11 +132,18 @@ export default function NotebookApp() {
   }
 
   const focusSource = (fileName: string) => {
-    const target = sourceFiles.find((f) => f.name === fileName)
+    const target = entries.find((f) => f.name === fileName)
     if (!target) return
     pendingChunkId.current = null
     setActiveChunkId(null)
     setSelectedId(target.id)
+  }
+
+  const handleDelete = (id: string) => {
+    void remove(id).then(() => {
+      if (selectedId === id) setSelectedId(null)
+      if (infoId === id) setInfoId(null)
+    })
   }
 
   const beginResize = (
@@ -153,6 +194,11 @@ export default function NotebookApp() {
           <h1 className="text-sm font-semibold text-gray-900">SourceChat</h1>
           <span className="text-xs text-gray-400">Chat with your documents</span>
         </div>
+        {!backendUp && (
+          <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+            Backend offline — showing demo files
+          </span>
+        )}
       </header>
 
       <div className="flex flex-1 overflow-hidden p-3">
@@ -167,6 +213,13 @@ export default function NotebookApp() {
             onSelect={setSelectedId}
             collapsed={leftCollapsed}
             onToggleCollapse={() => setLeftCollapsed((v) => !v)}
+            entries={entries}
+            backendUp={backendUp}
+            onUpload={(file) => {
+              void upload(file)
+            }}
+            onDelete={handleDelete}
+            onShowInfo={setInfoId}
           />
         </aside>
         {leftCollapsed ? (
@@ -179,7 +232,7 @@ export default function NotebookApp() {
         )}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <FileViewer
-            file={selected}
+            file={selectedFile}
             chunks={chunkSet?.chunks}
             hoveredChunkId={hoveredChunkId}
             activeChunkId={activeChunkId}
@@ -198,6 +251,7 @@ export default function NotebookApp() {
         >
           <RightPanel
             chunkSet={chunkSet}
+            documentId={selectedEntry?.backed === 'backend' ? selectedEntry.id : null}
             hoveredChunkId={hoveredChunkId}
             activeChunkId={activeChunkId}
             onHoverChunk={setHoveredChunkId}
@@ -207,6 +261,10 @@ export default function NotebookApp() {
           />
         </div>
       </div>
+
+      {infoEntry && (
+        <FileInfoPanel entry={infoEntry} onClose={() => setInfoId(null)} />
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import type { PdfSource, SourceFolder, SourceNode } from '../types'
 import DropZone from './DropZone'
@@ -47,6 +47,10 @@ interface SourcesTabProps {
   setFolders: React.Dispatch<React.SetStateAction<SourceFolder[]>>
   sources: PdfSource[]
   setSources: React.Dispatch<React.SetStateAction<PdfSource[]>>
+  onUpload?: (file: File) => void | Promise<void>
+  onDelete?: (id: string) => void
+  onShowInfo?: (id: string) => void
+  uploadDisabled?: boolean
 }
 
 export default function SourcesTab({
@@ -56,12 +60,17 @@ export default function SourcesTab({
   setFolders,
   sources,
   setSources,
+  onUpload,
+  onDelete,
+  onShowInfo,
+  uploadDisabled,
 }: SourcesTabProps) {
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(folders.map((f) => f.id)),
   )
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [rootDragOver, setRootDragOver] = useState(false)
+  const addInputRef = useRef<HTMLInputElement>(null)
 
   const tree = useMemo(
     () => buildTree(folders, sources.filter((s) => !s.selected), null),
@@ -138,10 +147,26 @@ export default function SourcesTab({
             Files
           </span>
           <div className="flex items-center gap-0.5">
+            <input
+              ref={addInputRef}
+              type="file"
+              accept=".pdf,.md,.txt"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = e.target.files
+                if (files && onUpload) {
+                  Array.from(files).forEach((f) => void onUpload(f))
+                }
+                if (addInputRef.current) addInputRef.current.value = ''
+              }}
+            />
             <button
               type="button"
               title="Add source"
-              className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+              disabled={uploadDisabled}
+              onClick={() => addInputRef.current?.click()}
+              className="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M12 5v14M5 12h14" />
@@ -186,6 +211,8 @@ export default function SourcesTab({
             onRenameFolder={renameFolder}
             onDeleteFolder={deleteFolder}
             onDragOver={setDragOverId}
+            onShowInfo={onShowInfo}
+            onDelete={onDelete}
           />
         </div>
 
@@ -198,7 +225,7 @@ export default function SourcesTab({
       </div>
 
       <div className="border-t border-gray-100 p-3">
-        <DropZone />
+        <DropZone onUpload={onUpload} disabled={uploadDisabled} />
       </div>
     </div>
   )
