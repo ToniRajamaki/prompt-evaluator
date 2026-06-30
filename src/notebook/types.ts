@@ -63,7 +63,13 @@ export interface Chunk {
   length: number
   text: string
   page?: number
-  manualHighlights?: ManualChunkHighlight[]
+  /**
+   * Precomputed highlight boxes per page, in normalized page coordinates
+   * (0..1). Produced offline by a PDF parser (PyMuPDF) so the runtime can scale
+   * them to any zoom without re-parsing. When absent, highlights are derived
+   * live by matching `text` against the PDF/text-document content.
+   */
+  highlights?: ChunkHighlight[]
 }
 
 export interface ChunkSet {
@@ -82,16 +88,21 @@ export interface HighlightRect {
   height: number
 }
 
-export interface NormalizedHighlightRect {
-  left: number
-  top: number
-  width: number
-  height: number
+/**
+ * A highlight box in normalized page coordinates (each value in 0..1, relative
+ * to the page width/height). `x0,y0` is the top-left corner, `x1,y1` the
+ * bottom-right. Matches the box schema stored by the PDF-parsing pipeline.
+ */
+export interface NormalizedBox {
+  x0: number
+  y0: number
+  x1: number
+  y1: number
 }
 
-export interface ManualChunkHighlight {
-  pageNumber: number
-  rects: NormalizedHighlightRect[]
+export interface ChunkHighlight {
+  page: number
+  boxes: NormalizedBox[]
 }
 
 export interface ChunkPageHighlights {

@@ -55,7 +55,14 @@ export default function FileViewer({
             onChunkClick={onChunkClick}
           />
         ) : (
-          <TextViewer url={file.url} mode={file.kind} />
+          <TextViewer
+            url={file.url}
+            mode={file.kind}
+            chunks={chunks}
+            hoveredChunkId={hoveredChunkId}
+            activeChunkId={activeChunkId}
+            onChunkClick={onChunkClick}
+          />
         )}
       </div>
     </div>

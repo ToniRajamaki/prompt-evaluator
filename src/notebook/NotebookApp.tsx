@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import FileViewer from './components/FileViewer'
 import { sourceFiles } from './fileRegistry'
 import { getChunksForFile } from './data/chunksRegistry'
-import type { Citation } from './types'
+import { chunkText } from './chunker'
+import type { Citation, ChunkSet } from './types'
 
 type ResizeSide = 'left' | 'right'
 
@@ -44,10 +45,35 @@ export default function NotebookApp() {
   const pendingChunkId = useRef<string | null>(null)
 
   const selected = sourceFiles.find((f) => f.id === selectedId) ?? null
-  const chunkSet = useMemo(
-    () => (selected?.kind === 'pdf' ? getChunksForFile(selected.name) : null),
-    [selected],
-  )
+
+  // Chunks: PDFs use prebuilt JSON; md/txt are chunked at runtime from their
+  // text (backend postponed). The runtime chunk text/offsets feed both the
+  // chunks panel and the in-document highlight overlays.
+  const [chunkSet, setChunkSet] = useState<ChunkSet | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!selected) {
+      setChunkSet(null)
+      return
+    }
+    if (selected.kind === 'pdf') {
+      setChunkSet(getChunksForFile(selected.name))
+      return
+    }
+    setChunkSet(null)
+    fetch(selected.url)
+      .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((text) => {
+        if (!cancelled) setChunkSet(chunkText(selected.name, text))
+      })
+      .catch(() => {
+        if (!cancelled) setChunkSet(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selected])
 
   // Reset chunk selection when switching files, but honor a pending citation jump.
   useEffect(() => {

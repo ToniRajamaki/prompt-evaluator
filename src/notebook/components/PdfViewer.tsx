@@ -299,6 +299,7 @@ function useOverlayPainter({
           div.style.height = `${rect.height}px`
           div.style.background = color.bg
           div.style.borderRadius = '2px'
+          div.style.mixBlendMode = 'multiply'
           div.style.transition = 'all 120ms ease'
           div.style.cursor = 'pointer'
           div.style.pointerEvents = 'auto'
