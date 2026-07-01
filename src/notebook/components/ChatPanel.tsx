@@ -3,7 +3,6 @@ import type {
   AnswerParagraph,
   ChatContextAttachment,
   ChatMessage as ChatMessageType,
-  ChunkSet,
   Citation,
 } from '../types'
 import { sendChatStream, toCitation, type BackendCitation } from '../api/chat'
@@ -12,7 +11,6 @@ import ChatMessage from './ChatMessage'
 import TypingDots from './TypingDots'
 
 interface ChatPanelProps {
-  chunkSet: ChunkSet | null
   documentId?: string | null
   contextDocumentIds?: string[]
   contextAttachments: ChatContextAttachment[]
@@ -226,7 +224,6 @@ function buildParagraphs(
 }
 
 export default function ChatPanel({
-  chunkSet,
   documentId,
   contextDocumentIds,
   contextAttachments,
@@ -431,7 +428,7 @@ export default function ChatPanel({
             ))}
           </div>
         )}
-        <div className="flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100">
+        <div className="flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-100">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -452,7 +449,7 @@ export default function ChatPanel({
             onClick={() => void handleSend()}
             disabled={loading || (!input.trim() && contextAttachments.length === 0)}
             aria-label="Send message"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm transition hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-600 text-white shadow-sm transition hover:bg-amber-700 active:scale-95 disabled:opacity-50"
           >
             <svg
               className="h-4 w-4"
@@ -467,19 +464,6 @@ export default function ChatPanel({
             </svg>
           </button>
         </div>
-        {chunkSet && (
-          <p className="mt-1.5 px-1 text-[11px] text-gray-400">
-            Answers are grounded in{' '}
-            {contextDocumentIds && contextDocumentIds.length > 0
-              ? `your ${contextDocumentIds.length} context source${
-                  contextDocumentIds.length > 1 ? 's' : ''
-                }`
-              : documentId
-                ? 'this document'
-                : 'your documents'}{' '}
-            via retrieval.
-          </p>
-        )}
       </div>
     </main>
   )

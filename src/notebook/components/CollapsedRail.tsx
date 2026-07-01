@@ -42,9 +42,9 @@ function RailItem({
         onClick={() => onSelect(source.id)}
         className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
           active
-            ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200'
+            ? 'bg-amber-50 ring-1 ring-inset ring-amber-200'
             : source.selected
-              ? 'bg-white ring-1 ring-inset ring-indigo-200'
+              ? 'bg-white ring-1 ring-inset ring-amber-200'
               : 'hover:bg-gray-100'
         }`}
       >
@@ -93,7 +93,7 @@ function RailFolder({
 }) {
   return (
     <li className="group relative">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white ring-1 ring-inset ring-indigo-200">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white ring-1 ring-inset ring-amber-200">
         <svg
           className="h-4 w-4 text-amber-500"
           viewBox="0 0 24 24"
@@ -152,8 +152,8 @@ export default function CollapsedRail({
       </ul>
 
       {contextFolders.length + contextSources.length > 0 && (
-        <div className="mx-auto mb-2 flex w-9 flex-col items-center gap-1 rounded-xl border border-indigo-200 bg-indigo-50/60 py-2">
-          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold text-white">
+        <div className="mx-auto mb-2 flex w-9 flex-col items-center gap-1 rounded-xl border border-amber-200 bg-amber-50/60 py-2">
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-semibold text-white">
             {contextFolders.length + contextSources.length}
           </span>
           {contextFolders.map((folder) => (
@@ -195,7 +195,7 @@ export default function CollapsedRail({
           title="Upload source"
           disabled={uploadDisabled}
           onClick={() => inputRef.current?.click()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 text-gray-500 transition hover:border-indigo-400 hover:bg-indigo-50/50 hover:text-indigo-600 disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50 text-gray-500 transition hover:border-amber-400 hover:bg-amber-50/50 hover:text-amber-600 disabled:opacity-50"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 16V4M5 11l7-7 7 7" />

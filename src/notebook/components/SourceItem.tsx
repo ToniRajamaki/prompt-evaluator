@@ -49,7 +49,7 @@ export default function SourceItem({
       onClick={() => onSelect(source.id)}
       className={`group flex h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm transition ${
         active
-          ? 'bg-indigo-50 text-indigo-900 ring-1 ring-inset ring-indigo-100'
+          ? 'bg-amber-50 text-amber-900 ring-1 ring-inset ring-amber-100'
           : 'text-gray-700 hover:bg-gray-100'
       }`}
       style={{ paddingLeft: depth * INDENT + 22 }}
@@ -116,7 +116,7 @@ export default function SourceItem({
             e.stopPropagation()
             onToggleSelect(source.id)
           }}
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-indigo-500 transition hover:bg-indigo-100 hover:text-indigo-700"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-amber-500 transition hover:bg-amber-100 hover:text-amber-700"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M5 12h14" />
@@ -130,7 +130,7 @@ export default function SourceItem({
             e.stopPropagation()
             onToggleSelect(source.id)
           }}
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-400 opacity-0 transition hover:bg-indigo-100 hover:text-indigo-600 group-hover:opacity-100"
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-400 opacity-0 transition hover:bg-amber-100 hover:text-amber-600 group-hover:opacity-100"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />

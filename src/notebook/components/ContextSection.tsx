@@ -27,15 +27,15 @@ export default function ContextSection({
   if (total === 0) return null
 
   return (
-    <div className="rounded-lg border border-indigo-200 bg-indigo-50/50">
+    <div className="rounded-lg border border-amber-200 bg-amber-50/50">
       <div className="flex items-center justify-between px-2.5 py-1.5">
-        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-indigo-600">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-600">
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M20 6L9 17l-5-5" />
           </svg>
           In context
         </span>
-        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold text-white">
+        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-semibold text-white">
           {total}
         </span>
       </div>
@@ -44,7 +44,7 @@ export default function ContextSection({
         {folders.map((folder) => (
           <li key={folder.id}>
             <div
-              className="group flex h-7 items-center gap-2 rounded-md px-1.5 text-sm text-indigo-900/80 transition hover:bg-white/70"
+              className="group flex h-7 items-center gap-2 rounded-md px-1.5 text-sm text-amber-900/80 transition hover:bg-white/70"
               title={folder.name}
             >
               <svg
@@ -59,7 +59,7 @@ export default function ContextSection({
                 type="button"
                 title="Remove folder from context"
                 onClick={() => onRemoveFolder(folder.id)}
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-indigo-400 transition hover:bg-rose-100 hover:text-rose-600"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-amber-400 transition hover:bg-rose-100 hover:text-rose-600"
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6L6 18M6 6l12 12" />
@@ -76,8 +76,8 @@ export default function ContextSection({
                 onClick={() => onSelect(source.id)}
                 className={`group flex h-7 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm transition ${
                   active
-                    ? 'bg-white text-indigo-900 ring-1 ring-inset ring-indigo-200'
-                    : 'text-indigo-900/80 hover:bg-white/70'
+                    ? 'bg-white text-amber-900 ring-1 ring-inset ring-amber-200'
+                    : 'text-amber-900/80 hover:bg-white/70'
                 }`}
                 title={source.name}
               >
@@ -99,7 +99,7 @@ export default function ContextSection({
                     e.stopPropagation()
                     onRemoveSource(source.id)
                   }}
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-indigo-400 transition hover:bg-rose-100 hover:text-rose-600"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-amber-400 transition hover:bg-rose-100 hover:text-rose-600"
                 >
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <path d="M18 6L6 18M6 6l12 12" />

@@ -77,7 +77,6 @@ export default function RightPanel({
           />
         ) : (
           <ChatPanel
-            chunkSet={chunkSet}
             documentId={documentId}
             contextDocumentIds={contextDocumentIds}
             contextAttachments={chatContexts}

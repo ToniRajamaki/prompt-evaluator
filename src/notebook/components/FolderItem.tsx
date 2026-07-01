@@ -77,7 +77,7 @@ export default function FolderItem({
       onDrop={handleDrop}
       onClick={() => !editing && onToggleExpand(folder.id)}
       className={`group flex h-8 cursor-pointer select-none items-center gap-1 rounded-md px-1.5 text-sm transition ${
-        isDragOver ? 'bg-indigo-50 ring-1 ring-indigo-200' : 'hover:bg-gray-100'
+        isDragOver ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-gray-100'
       }`}
       style={{ paddingLeft: depth * INDENT + 4 }}
     >
@@ -115,7 +115,7 @@ export default function FolderItem({
             if (e.key === 'Enter') commit()
             if (e.key === 'Escape') setEditing(false)
           }}
-          className="min-w-0 flex-1 rounded border border-indigo-300 px-1 text-sm outline-none"
+          className="min-w-0 flex-1 rounded border border-amber-300 px-1 text-sm outline-none"
         />
       ) : (
         <span className="min-w-0 flex-1 truncate font-medium text-gray-700">{name}</span>
@@ -144,7 +144,7 @@ export default function FolderItem({
               e.stopPropagation()
               onToggleSelect(folder.id)
             }}
-            className="rounded p-0.5 text-gray-400 hover:bg-indigo-100 hover:text-indigo-600"
+            className="rounded p-0.5 text-gray-400 hover:bg-amber-100 hover:text-amber-600"
           >
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M12 5v14M5 12h14" />

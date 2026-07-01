@@ -36,7 +36,7 @@ function ResizeHandle({
       onPointerDown={onPointerDown}
       className="group flex w-2 shrink-0 cursor-col-resize touch-none items-center justify-center self-stretch rounded-full"
     >
-      <div className="h-12 w-1 rounded-full bg-transparent transition group-hover:bg-indigo-200 group-active:bg-indigo-300" />
+      <div className="h-12 w-1 rounded-full bg-transparent transition group-hover:bg-amber-200 group-active:bg-amber-300" />
     </div>
   )
 }
@@ -254,19 +254,24 @@ export default function NotebookApp() {
             onPointerDown={(e) => beginResize('left', e)}
           />
         )}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <FileViewer
-            file={selectedFile}
-            chunks={chunkSet?.chunks}
-            hoveredChunkId={hoveredChunkId}
-            activeChunkId={activeChunkId}
-            onChunkClick={(id) =>
-              setActiveChunkId((curr) => (curr === id ? null : id))
-            }
-            onAddContext={(attachment) =>
-              setChatContexts((current) => [...current, attachment])
-            }
-          />
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <FileViewer
+              file={selectedFile}
+              chunks={chunkSet?.chunks}
+              hoveredChunkId={hoveredChunkId}
+              activeChunkId={activeChunkId}
+              onChunkClick={(id) =>
+                setActiveChunkId((curr) => (curr === id ? null : id))
+              }
+              onAddContext={(attachment) =>
+                setChatContexts((current) => [...current, attachment])
+              }
+            />
+          </div>
+          <p className="shrink-0 px-1 text-center text-[10px] text-gray-400">
+            Highlight Studio may make mistakes. Verify important information.
+          </p>
         </div>
         <ResizeHandle
           label="Resize chat panel"
