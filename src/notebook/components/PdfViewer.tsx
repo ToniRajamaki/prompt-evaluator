@@ -95,6 +95,9 @@ export default function PdfViewer({
             'relative mx-auto mb-6 shadow border border-gray-200 bg-white'
           wrapper.style.width = `${viewport.width}px`
           wrapper.style.height = `${viewport.height}px`
+          // Fixed box: clip any overflow so page content can never grow the
+          // scroll height (defends against duplicated/stacked canvases).
+          wrapper.style.overflow = 'hidden'
           wrapper.setAttribute('data-page', String(pageNum))
 
           if (pagesHost) pagesHost.appendChild(wrapper)
@@ -129,6 +132,13 @@ export default function PdfViewer({
             canvas.style.pointerEvents = 'none'
             ctx.scale(dpr, dpr)
 
+            // Clear any stale canvas/text-layer first so a page can never hold
+            // more than one of each (guards against re-entry / render↔unrender
+            // races that would otherwise stack duplicate canvases).
+            wrapper
+              .querySelectorAll('[data-page-canvas],[data-page-text-layer]')
+              .forEach((n) => n.remove())
+
             // Insert behind any highlight overlay layer.
             wrapper.insertBefore(canvas, wrapper.firstChild)
             await page.render({ canvasContext: ctx, viewport, canvas }).promise
@@ -141,8 +151,8 @@ export default function PdfViewer({
             textLayerContainer.style.inset = '0'
             textLayerContainer.style.zIndex = '3'
             textLayerContainer.style.pointerEvents = 'auto'
-            textLayerContainer.style.setProperty('--scale-factor', String(SCALE))
-            textLayerContainer.style.setProperty('--total-scale-factor', String(SCALE))
+            textLayerContainer.style.setProperty('--scale-factor', String(viewport.scale))
+            textLayerContainer.style.setProperty('--total-scale-factor', String(viewport.scale))
             wrapper.appendChild(textLayerContainer)
 
             const textLayer = new pdfjsLib.TextLayer({

@@ -314,13 +314,22 @@ function uniqueCitations(citations: Citation[]): Citation[] {
   })
 }
 
+function uniqueByFileName(citations: Citation[]): Citation[] {
+  const seen = new Set<string>()
+  return citations.filter((citation) => {
+    if (seen.has(citation.fileName)) return false
+    seen.add(citation.fileName)
+    return true
+  })
+}
+
 export default function ChatMessage({
   message,
   streaming = false,
   onCitationClick,
 }: ChatMessageProps) {
   const isUser = message.role === 'user'
-  const contextSources = message.paragraphs
+  const inlineContextSources = message.paragraphs
     ?.flatMap((para) => para.citations)
     .filter(
       (citation, index, citations) =>
@@ -328,6 +337,12 @@ export default function ChatMessage({
           (candidate) => candidate.fileName === citation.fileName,
         ) === index,
     )
+  // When the model omits inline `[id]` tokens, still surface the sources the
+  // backend actually retrieved for this answer so references never disappear.
+  const fallbackSources = uniqueByFileName(message.sources ?? [])
+  const contextSources = inlineContextSources?.length
+    ? inlineContextSources
+    : fallbackSources
   const citedAnswerMarkdown = message.paragraphs
     ?.map((para) => para.text)
     .join('\n\n')
