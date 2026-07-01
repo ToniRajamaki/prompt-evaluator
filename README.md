@@ -22,6 +22,9 @@ flowchart LR
   H --> I[Show citations and highlights]
 ```
 
+For a compact architecture walkthrough of the backend flow, chunking,
+embeddings, pgvector storage, and agent tool, see [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
+
 ## What you need first
 
 - **Node.js** (for the frontend)
