@@ -3,6 +3,25 @@
 Chat with your documents and get **source-grounded answers** — every cited
 passage is highlighted right in the original `md`, `txt`, or `pdf`.
 
+## How it works
+
+When you upload a `pdf`, `md`, or `txt` file, the backend stores it, splits the
+text into small chunks, creates embeddings for those chunks, and saves them in
+Postgres with pgvector. When you ask a question, the chat searches those vectors,
+finds the most relevant chunks, and answers using only that source content.
+
+```mermaid
+flowchart LR
+  A[Upload PDF, MD, or TXT] --> B[Backend stores the file]
+  B --> C[Split text into chunks]
+  C --> D[Create embeddings]
+  D --> E[Save chunks in Postgres + pgvector]
+  F[Ask a question] --> G[Search relevant chunks]
+  E --> G
+  G --> H[LLM writes an answer]
+  H --> I[Show citations and highlights]
+```
+
 ## What you need first
 
 - **Node.js** (for the frontend)
