@@ -18,7 +18,10 @@ interface PdfViewerProps {
   onChunkClick?: (chunkId: string) => void
 }
 
-const SCALE = 1.4
+const DEFAULT_SCALE = 1.4
+const MIN_ZOOM = 0.75
+const MAX_ZOOM = 2.5
+const ZOOM_STEP = 0.25
 type ChunkHighlightEntry = ChunkRectsByPage[number][number]
 
 export default function PdfViewer({
@@ -30,15 +33,23 @@ export default function PdfViewer({
 }: PdfViewerProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const currentPageRef = useRef(1)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [highlights, setHighlights] = useState<ChunkRectsByPage>({})
+  const [pageCount, setPageCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [zoom, setZoom] = useState(1)
 
   const chunkIndexById = useMemo(() => {
     const m = new Map<string, number>()
     chunks?.forEach((c, i) => m.set(c.id, i))
     return m
   }, [chunks])
+
+  useEffect(() => {
+    currentPageRef.current = currentPage
+  }, [currentPage])
 
   // Load PDF, lay out placeholder pages, and lazily rasterize only the pages
   // near the viewport. Rendering every page of a large book (hundreds of pages)
@@ -56,6 +67,8 @@ export default function PdfViewer({
     setError(null)
     setLoading(true)
     setHighlights({})
+    setPageCount(0)
+    const pageToRestore = currentPageRef.current
 
     const renderedPages = new Set<number>()
     const renderingPages = new Set<number>()
@@ -67,13 +80,14 @@ export default function PdfViewer({
     loadingTask.promise
       .then(async (pdf) => {
         const viewports: Record<number, pdfjsLib.PageViewport> = {}
+        setPageCount(pdf.numPages)
 
         // Build correctly-sized placeholders for every page. getPage/getViewport
         // is cheap (no rasterization), so this keeps scroll height accurate.
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           if (cancelled) return
           const page = await pdf.getPage(pageNum)
-          const viewport = page.getViewport({ scale: SCALE })
+          const viewport = page.getViewport({ scale: DEFAULT_SCALE * zoom })
           viewports[pageNum] = viewport
 
           const wrapper = document.createElement('div')
@@ -163,10 +177,31 @@ export default function PdfViewer({
         // pages whose wrappers fall within the viewport (plus a margin) and free
         // the rest so we never hold more than a handful of canvases at once.
         const MARGIN = 1500
+        const updateCurrentPage = () => {
+          let closestPage = currentPageRef.current
+          let closestDistance = Number.POSITIVE_INFINITY
+          const viewportAnchor = scroll.scrollTop + 80
+
+          for (let n = 1; n <= pdf.numPages; n++) {
+            const w = pageRefs.current.get(n)
+            if (!w) continue
+            const distance = Math.abs(w.offsetTop - viewportAnchor)
+            if (distance < closestDistance) {
+              closestDistance = distance
+              closestPage = n
+            }
+          }
+
+          if (closestPage !== currentPageRef.current) {
+            currentPageRef.current = closestPage
+            setCurrentPage(closestPage)
+          }
+        }
         const updateVisible = () => {
           if (cancelled) return
           const top = scroll.scrollTop
           const bottom = top + scroll.clientHeight
+          updateCurrentPage()
           for (let n = 1; n <= pdf.numPages; n++) {
             const w = pageRefs.current.get(n)
             if (!w) continue
@@ -192,6 +227,14 @@ export default function PdfViewer({
           if (raf) cancelAnimationFrame(raf)
         }
         updateVisible()
+        const restorePage = Math.min(pageToRestore, pdf.numPages)
+        requestAnimationFrame(() => {
+          if (cancelled) return
+          pageRefs.current
+            .get(restorePage)
+            ?.scrollIntoView({ block: 'start', behavior: 'instant' })
+          updateVisible()
+        })
 
         // Highlights are a text-only pass (no rasterization), so we can compute
         // them for the whole document up front without the memory blow-up.
@@ -212,7 +255,7 @@ export default function PdfViewer({
       for (const textLayer of textLayers.values()) textLayer.cancel()
       loadingTask.destroy()
     }
-  }, [url, chunks])
+  }, [url, chunks, zoom])
 
   // Scroll active chunk into view
   useEffect(() => {
@@ -231,21 +274,89 @@ export default function PdfViewer({
     scrollRef.current.scrollTo({ top: target, behavior: 'smooth' })
   }, [activeChunkId, highlights])
 
-  return (
-    <div ref={scrollRef} className="relative h-full overflow-y-auto bg-gray-100 p-4">
-      {loading && <p className="text-sm text-gray-500">Loading PDF…</p>}
-      {error && <p className="text-sm text-red-600">Error: {error}</p>}
-      <div data-pages-host />
+  const goToPage = (pageNumber: number) => {
+    const boundedPage = Math.min(Math.max(pageNumber, 1), pageCount || 1)
+    pageRefs.current
+      .get(boundedPage)
+      ?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    setCurrentPage(boundedPage)
+  }
 
-      {/* Highlight overlays — portal-like rendering using page wrappers via fixed positioning relative to wrapper offsets */}
-      <Overlays
-        highlights={highlights}
-        pageRefs={pageRefs}
-        hoveredChunkId={hoveredChunkId ?? null}
-        activeChunkId={activeChunkId ?? null}
-        chunkIndexById={chunkIndexById}
-        onChunkClick={onChunkClick}
-      />
+  const zoomOut = () =>
+    setZoom((value) => Math.max(MIN_ZOOM, Number((value - ZOOM_STEP).toFixed(2))))
+  const zoomIn = () =>
+    setZoom((value) => Math.min(MAX_ZOOM, Number((value + ZOOM_STEP).toFixed(2))))
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-gray-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-white/95 px-3 py-2 text-xs text-gray-600 shadow-sm">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={loading || currentPage <= 1}
+            className="rounded-md border border-gray-200 px-2 py-1 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Prev
+          </button>
+          <span className="min-w-20 px-2 text-center tabular-nums">
+            {pageCount ? `${currentPage} / ${pageCount}` : '— / —'}
+          </span>
+          <button
+            type="button"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={loading || !pageCount || currentPage >= pageCount}
+            className="rounded-md border border-gray-200 px-2 py-1 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={zoomOut}
+            disabled={loading || zoom <= MIN_ZOOM}
+            className="rounded-md border border-gray-200 px-2 py-1 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Zoom out"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1)}
+            disabled={loading || zoom === 1}
+            className="min-w-14 rounded-md border border-gray-200 px-2 py-1 font-medium text-gray-700 tabular-nums disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={zoomIn}
+            disabled={loading || zoom >= MAX_ZOOM}
+            className="rounded-md border border-gray-200 px-2 py-1 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-y-auto p-4">
+        {loading && <p className="text-sm text-gray-500">Loading PDF…</p>}
+        {error && <p className="text-sm text-red-600">Error: {error}</p>}
+        <div data-pages-host />
+
+        {/* Highlight overlays — portal-like rendering using page wrappers via fixed positioning relative to wrapper offsets */}
+        <Overlays
+          highlights={highlights}
+          pageRefs={pageRefs}
+          hoveredChunkId={hoveredChunkId ?? null}
+          activeChunkId={activeChunkId ?? null}
+          chunkIndexById={chunkIndexById}
+          onChunkClick={onChunkClick}
+        />
+      </div>
     </div>
   )
 }
