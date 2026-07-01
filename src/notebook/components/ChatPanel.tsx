@@ -323,6 +323,7 @@ export default function ChatPanel({
           role: 'assistant',
           text: stripCitationTokens(full),
           paragraphs: buildParagraphs(full, citations),
+          sources: citations.map(toCitation),
         },
       ])
     } catch (err) {

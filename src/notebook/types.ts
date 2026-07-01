@@ -52,6 +52,12 @@ export interface ChatMessage {
   contextAttachments?: ChatContextAttachment[]
   /** Structured, source-cited answer. Present only on assistant messages. */
   paragraphs?: AnswerParagraph[]
+  /**
+   * All source chunks the backend retrieved for this answer, regardless of
+   * whether the model inline-cited them. Used as a fallback so the retrieved
+   * sources still surface when the model omits inline `[id]` tokens.
+   */
+  sources?: Citation[]
 }
 
 export interface ChatContextAttachment {
