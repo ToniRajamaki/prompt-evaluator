@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import 'pdfjs-dist/web/pdf_viewer.css'
+import './pdfSelection.css'
 import type { Chunk } from '../types'
 import { colorFor } from '../data/chunksRegistry'
 import { computeChunkHighlights } from './pdfChunkMap'
@@ -57,6 +59,7 @@ export default function PdfViewer({
 
     const renderedPages = new Set<number>()
     const renderingPages = new Set<number>()
+    const textLayers = new Map<number, pdfjsLib.TextLayer>()
     let cleanupScroll: (() => void) | null = null
 
     const loadingTask = pdfjsLib.getDocument({ url })
@@ -108,11 +111,33 @@ export default function PdfViewer({
             canvas.style.height = `${viewport.height}px`
             canvas.className = 'block'
             canvas.setAttribute('data-page-canvas', '')
+            canvas.style.userSelect = 'none'
+            canvas.style.pointerEvents = 'none'
             ctx.scale(dpr, dpr)
 
             // Insert behind any highlight overlay layer.
             wrapper.insertBefore(canvas, wrapper.firstChild)
             await page.render({ canvasContext: ctx, viewport, canvas }).promise
+            if (cancelled) return
+
+            const textLayerContainer = document.createElement('div')
+            textLayerContainer.className = 'textLayer sourcechat-pdf-text-layer'
+            textLayerContainer.setAttribute('data-page-text-layer', '')
+            textLayerContainer.style.position = 'absolute'
+            textLayerContainer.style.inset = '0'
+            textLayerContainer.style.zIndex = '3'
+            textLayerContainer.style.pointerEvents = 'auto'
+            textLayerContainer.style.setProperty('--scale-factor', String(SCALE))
+            textLayerContainer.style.setProperty('--total-scale-factor', String(SCALE))
+            wrapper.appendChild(textLayerContainer)
+
+            const textLayer = new pdfjsLib.TextLayer({
+              textContentSource: await page.getTextContent(),
+              container: textLayerContainer,
+              viewport,
+            })
+            textLayers.set(pageNum, textLayer)
+            await textLayer.render()
             renderedPages.add(pageNum)
           } catch (err) {
             // Surface unexpected render failures; ignore cancellations.
@@ -125,8 +150,12 @@ export default function PdfViewer({
         const unrenderPage = (pageNum: number) => {
           const wrapper = pageRefs.current.get(pageNum)
           if (!wrapper) return
+          textLayers.get(pageNum)?.cancel()
+          textLayers.delete(pageNum)
           const c = wrapper.querySelector('[data-page-canvas]')
           if (c) c.remove()
+          const textLayer = wrapper.querySelector('[data-page-text-layer]')
+          if (textLayer) textLayer.remove()
           renderedPages.delete(pageNum)
         }
 
@@ -180,6 +209,7 @@ export default function PdfViewer({
     return () => {
       cancelled = true
       cleanupScroll?.()
+      for (const textLayer of textLayers.values()) textLayer.cancel()
       loadingTask.destroy()
     }
   }, [url, chunks])
@@ -282,6 +312,7 @@ function useOverlayPainter({
       layer.setAttribute('data-overlay-layer', '')
       layer.style.position = 'absolute'
       layer.style.inset = '0'
+      layer.style.zIndex = '2'
       layer.style.pointerEvents = 'none'
 
       for (const entry of visibleEntries) {
@@ -301,8 +332,7 @@ function useOverlayPainter({
           div.style.borderRadius = '2px'
           div.style.mixBlendMode = 'multiply'
           div.style.transition = 'all 120ms ease'
-          div.style.cursor = 'pointer'
-          div.style.pointerEvents = 'auto'
+          div.style.pointerEvents = 'none'
           if (isActive) {
             div.style.boxShadow = `0 0 0 2px ${color.ring}`
           }
@@ -311,7 +341,6 @@ function useOverlayPainter({
             div.style.filter = 'brightness(1.05)'
           }
           div.title = `Chunk ${idx + 1}`
-          div.addEventListener('click', () => onChunkClick?.(entry.chunkId))
           layer.appendChild(div)
         }
       }

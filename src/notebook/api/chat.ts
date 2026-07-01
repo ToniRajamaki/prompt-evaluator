@@ -14,8 +14,26 @@ export interface BackendCitation {
   score: number
 }
 
+function serializeMessageText(message: ChatMessage): string {
+  if (message.role !== 'user' || !message.contextAttachments?.length) {
+    return message.text
+  }
+
+  const contextBlock = message.contextAttachments
+    .map((attachment, index) => {
+      const source = attachment.sourceName
+        ? ` from ${attachment.sourceName}`
+        : ''
+      return `<context ${index + 1}${source}>\n${attachment.text}\n</context ${index + 1}>`
+    })
+    .join('\n\n')
+
+  const prompt = message.text.trim() || 'Use the attached context.'
+  return `${contextBlock}\n\n${prompt}`
+}
+
 function toMessages(messages: ChatMessage[]) {
-  return messages.map((m) => ({ role: m.role, text: m.text }))
+  return messages.map((m) => ({ role: m.role, text: serializeMessageText(m) }))
 }
 
 export function toCitation(c: BackendCitation): Citation {

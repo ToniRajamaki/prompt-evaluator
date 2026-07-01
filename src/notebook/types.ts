@@ -49,8 +49,19 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
+  contextAttachments?: ChatContextAttachment[]
   /** Structured, source-cited answer. Present only on assistant messages. */
   paragraphs?: AnswerParagraph[]
+}
+
+export interface ChatContextAttachment {
+  id: string
+  text: string
+  sourceName?: string
+  sourceId?: string
+  sourceKind?: SourceKind
+  label: string
+  createdFrom: 'selection' | 'paste'
 }
 
 export interface ChatHistoryItem {

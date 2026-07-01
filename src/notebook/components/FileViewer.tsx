@@ -1,4 +1,5 @@
-import type { Chunk, SourceFile } from '../types'
+import { useEffect, useRef, useState } from 'react'
+import type { ChatContextAttachment, Chunk, SourceFile } from '../types'
 import PdfViewer from './PdfViewer'
 import TextViewer from './TextViewer'
 
@@ -8,6 +9,25 @@ interface FileViewerProps {
   hoveredChunkId?: string | null
   activeChunkId?: string | null
   onChunkClick?: (chunkId: string) => void
+  onAddContext?: (attachment: ChatContextAttachment) => void
+}
+
+interface SelectionAction {
+  text: string
+  x: number
+  y: number
+}
+
+const MIN_SELECTION_LENGTH = 2
+
+function selectionRect(range: Range): DOMRect | null {
+  const rect = range.getBoundingClientRect()
+  if (rect.width || rect.height) return rect
+  return Array.from(range.getClientRects()).find((r) => r.width || r.height) ?? null
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
 }
 
 export default function FileViewer({
@@ -16,7 +36,80 @@ export default function FileViewer({
   hoveredChunkId,
   activeChunkId,
   onChunkClick,
+  onAddContext,
 }: FileViewerProps) {
+  const viewerRef = useRef<HTMLDivElement>(null)
+  const [selectionAction, setSelectionAction] = useState<SelectionAction | null>(null)
+
+  const clearSelectionAction = () => setSelectionAction(null)
+
+  const updateSelectionAction = (event?: React.MouseEvent<HTMLDivElement>) => {
+    const container = viewerRef.current
+    if (!container || !file) return
+
+    const selection = window.getSelection()
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      clearSelectionAction()
+      return
+    }
+
+    const anchor = selection.anchorNode
+    const focus = selection.focusNode
+    if (!anchor || !focus || !container.contains(anchor) || !container.contains(focus)) {
+      clearSelectionAction()
+      return
+    }
+
+    const text = selection.toString().replace(/\s+/g, ' ').trim()
+    if (text.length < MIN_SELECTION_LENGTH) {
+      clearSelectionAction()
+      return
+    }
+
+    const rect = selectionRect(selection.getRangeAt(0))
+    if (!rect) {
+      clearSelectionAction()
+      return
+    }
+
+    const host = container.getBoundingClientRect()
+    const x = event ? event.clientX - host.left + 14 : rect.right - host.left + 12
+    const y = event ? event.clientY - host.top + 14 : rect.bottom - host.top + 12
+
+    setSelectionAction({
+      text,
+      x: clamp(x, 12, host.width - 140),
+      y: clamp(y, 12, host.height - 44),
+    })
+  }
+
+  useEffect(() => {
+    clearSelectionAction()
+  }, [file?.id])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') clearSelectionAction()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const addSelectionToChat = () => {
+    if (!selectionAction || !file) return
+    onAddContext?.({
+      id: crypto.randomUUID(),
+      text: selectionAction.text,
+      sourceId: file.id,
+      sourceName: file.name,
+      sourceKind: file.kind,
+      label: file.name,
+      createdFrom: 'selection',
+    })
+    window.getSelection()?.removeAllRanges()
+    clearSelectionAction()
+  }
+
   if (!file) {
     return (
       <div className="flex h-full items-center justify-center bg-gray-50 text-sm text-gray-400">
@@ -45,7 +138,13 @@ export default function FileViewer({
           {file.name}
         </span>
       </div>
-      <div className="flex-1 overflow-hidden bg-gray-50/40">
+      <div
+        ref={viewerRef}
+        onMouseUp={(event) => updateSelectionAction(event)}
+        onKeyUp={() => updateSelectionAction()}
+        onScrollCapture={clearSelectionAction}
+        className="relative flex-1 overflow-hidden bg-gray-50/40"
+      >
         {file.kind === 'pdf' ? (
           <PdfViewer
             url={file.url}
@@ -63,6 +162,30 @@ export default function FileViewer({
             activeChunkId={activeChunkId}
             onChunkClick={onChunkClick}
           />
+        )}
+        {selectionAction && (
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={addSelectionToChat}
+            className="absolute z-30 flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 shadow-lg shadow-gray-900/10 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+            style={{ left: selectionAction.x, top: selectionAction.y }}
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+            Add to chat
+          </button>
         )}
       </div>
     </div>

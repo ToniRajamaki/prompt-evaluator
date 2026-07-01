@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ChunkSet, Citation } from '../types'
+import type { ChatContextAttachment, ChunkSet, Citation } from '../types'
 import ChatPanel from './ChatPanel'
 import ChunksPanel from './ChunksPanel'
 
@@ -11,6 +11,8 @@ interface RightPanelProps {
   contextDocumentIds?: string[]
   hoveredChunkId: string | null
   activeChunkId: string | null
+  chatContexts: ChatContextAttachment[]
+  onChatContextsChange: (contexts: ChatContextAttachment[]) => void
   onHoverChunk: (id: string | null) => void
   onSelectChunk: (id: string | null) => void
   onCitationClick?: (citation: Citation) => void
@@ -23,6 +25,8 @@ export default function RightPanel({
   contextDocumentIds,
   hoveredChunkId,
   activeChunkId,
+  chatContexts,
+  onChatContextsChange,
   onHoverChunk,
   onSelectChunk,
   onCitationClick,
@@ -76,6 +80,8 @@ export default function RightPanel({
             chunkSet={chunkSet}
             documentId={documentId}
             contextDocumentIds={contextDocumentIds}
+            contextAttachments={chatContexts}
+            onContextAttachmentsChange={onChatContextsChange}
             onCitationClick={onCitationClick}
             onSourceClick={onSourceClick}
           />

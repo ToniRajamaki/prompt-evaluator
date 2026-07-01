@@ -1,0 +1,7 @@
+.sourcechat-pdf-text-layer ::selection {
+  background: rgb(99 102 241 / 0.3);
+}
+
+.sourcechat-pdf-text-layer ::-moz-selection {
+  background: rgb(99 102 241 / 0.3);
+}

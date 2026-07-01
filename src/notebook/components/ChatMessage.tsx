@@ -1,7 +1,11 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ReactNode } from 'react'
-import type { ChatMessage as ChatMessageType, Citation } from '../types'
+import type {
+  ChatContextAttachment,
+  ChatMessage as ChatMessageType,
+  Citation,
+} from '../types'
 import CitationPill from './CitationPill'
 
 interface ChatMessageProps {
@@ -37,6 +41,123 @@ function ChatMarkdown({ children, tone = 'assistant' }: ChatMarkdownProps) {
       className={`prose prose-sm max-w-none break-words prose-p:my-1.5 prose-pre:my-2 prose-pre:whitespace-pre-wrap prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-0.5 prose-table:my-2 first:prose-p:mt-0 last:prose-p:mb-0 ${toneClasses}`}
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+    </div>
+  )
+}
+
+function contextPreview(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim()
+  return normalized.length > 72 ? `${normalized.slice(0, 72)}…` : normalized
+}
+
+function displayLabel(attachment: ChatContextAttachment): string {
+  return attachment.label.replace(/\.(pdf|md|txt)$/i, '')
+}
+
+function sourceBadge(attachment: ChatContextAttachment): string {
+  if (attachment.sourceKind) return attachment.sourceKind.toUpperCase()
+  return attachment.createdFrom === 'paste' ? 'PASTE' : 'TEXT'
+}
+
+function userContextTone(attachment: ChatContextAttachment) {
+  if (attachment.sourceKind === 'pdf') {
+    return {
+      shell: 'border-rose-100 bg-rose-50/70',
+      icon: 'text-rose-600 ring-rose-100',
+      badge: 'text-rose-600 ring-rose-100',
+    }
+  }
+  if (attachment.sourceKind === 'md') {
+    return {
+      shell: 'border-sky-100 bg-sky-50/70',
+      icon: 'text-sky-600 ring-sky-100',
+      badge: 'text-sky-600 ring-sky-100',
+    }
+  }
+  if (attachment.sourceKind === 'txt') {
+    return {
+      shell: 'border-gray-200 bg-gray-50/80',
+      icon: 'text-gray-500 ring-gray-200',
+      badge: 'text-gray-500 ring-gray-200',
+    }
+  }
+  return {
+    shell: 'border-violet-100 bg-violet-50/70',
+    icon: 'text-violet-600 ring-violet-100',
+    badge: 'text-violet-600 ring-violet-100',
+  }
+}
+
+function UserContextSummary({
+  attachments,
+}: {
+  attachments: ChatContextAttachment[]
+}) {
+  if (!attachments.length) return null
+  return (
+    <div className="mb-2 space-y-1.5">
+      {attachments.map((attachment) => {
+        const tone = userContextTone(attachment)
+        return (
+          <details
+            key={attachment.id}
+            className={`group rounded-xl border text-xs text-gray-700 shadow-sm ${tone.shell}`}
+          >
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-2 [&::-webkit-details-marker]:hidden">
+              <span
+                className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white ring-1 ${tone.icon}`}
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 7h16" />
+                  <path d="M4 12h10" />
+                  <path d="M4 17h7" />
+                </svg>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5">
+                  <span className="truncate font-medium text-gray-800">
+                    {displayLabel(attachment)}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase ring-1 ${tone.badge}`}
+                  >
+                    {sourceBadge(attachment)}
+                  </span>
+                </span>
+                <span className="block truncate text-[11px] text-gray-500">
+                  {contextPreview(attachment.text)}
+                </span>
+              </span>
+              <svg
+                className="h-3.5 w-3.5 shrink-0 text-gray-400 transition group-open:rotate-180"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </summary>
+            <pre
+              className={`max-h-36 overflow-y-auto whitespace-pre-wrap border-t px-3 py-2 font-sans text-[11px] leading-relaxed text-gray-600 ${tone.shell.split(' ')[0]}`}
+            >
+              {attachment.text}
+            </pre>
+          </details>
+        )
+      })}
     </div>
   )
 }
@@ -107,6 +228,7 @@ export default function ChatMessage({
     return (
       <div className="flex justify-end">
         <div className="max-w-[85%] rounded-2xl rounded-br-md bg-gray-100 px-3.5 py-2.5 text-sm leading-relaxed text-gray-800">
+          <UserContextSummary attachments={message.contextAttachments ?? []} />
           <ChatMarkdown tone="user">{message.text}</ChatMarkdown>
         </div>
       </div>

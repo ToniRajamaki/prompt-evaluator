@@ -7,7 +7,13 @@ import { getChunksForFile } from './data/chunksRegistry'
 import { chunkText } from './chunker'
 import { getDocumentChunks } from './api/documents'
 import { useDocuments, type DocumentEntry } from './hooks/useDocuments'
-import type { Citation, ChunkSet, PdfSource, SourceFile } from './types'
+import type {
+  ChatContextAttachment,
+  Citation,
+  ChunkSet,
+  PdfSource,
+  SourceFile,
+} from './types'
 
 type ResizeSide = 'left' | 'right'
 
@@ -61,6 +67,7 @@ export default function NotebookApp() {
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null)
   const [activeChunkId, setActiveChunkId] = useState<string | null>(null)
   const [infoId, setInfoId] = useState<string | null>(null)
+  const [chatContexts, setChatContexts] = useState<ChatContextAttachment[]>([])
   const pendingChunkId = useRef<string | null>(null)
 
   // Source list with local-only UI state (context selection + folder placement),
@@ -256,6 +263,9 @@ export default function NotebookApp() {
             onChunkClick={(id) =>
               setActiveChunkId((curr) => (curr === id ? null : id))
             }
+            onAddContext={(attachment) =>
+              setChatContexts((current) => [...current, attachment])
+            }
           />
         </div>
         <ResizeHandle
@@ -272,6 +282,8 @@ export default function NotebookApp() {
             contextDocumentIds={contextDocumentIds}
             hoveredChunkId={hoveredChunkId}
             activeChunkId={activeChunkId}
+            chatContexts={chatContexts}
+            onChatContextsChange={setChatContexts}
             onHoverChunk={setHoveredChunkId}
             onSelectChunk={setActiveChunkId}
             onCitationClick={focusCitation}
