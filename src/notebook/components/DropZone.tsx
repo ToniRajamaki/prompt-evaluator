@@ -12,6 +12,10 @@ export default function DropZone({ onUpload, disabled }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const label = busy ? 'Uploading…' : disabled ? 'Offline' : 'Upload'
+  const tooltip = disabled
+    ? 'Backend offline — uploads disabled'
+    : 'Drop PDF, Markdown, or TXT files here, or click to browse.'
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0 || !onUpload) return
@@ -46,6 +50,8 @@ export default function DropZone({ onUpload, disabled }: DropZoneProps) {
       <button
         type="button"
         disabled={disabled || busy}
+        title={tooltip}
+        aria-label={tooltip}
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault()
@@ -80,11 +86,7 @@ export default function DropZone({ onUpload, disabled }: DropZoneProps) {
           )}
         </span>
         <span className="text-xs font-medium text-gray-600 group-hover:text-indigo-600">
-          {busy
-            ? 'Uploading & vectorizing…'
-            : disabled
-              ? 'Backend offline — uploads disabled'
-              : 'Drop PDF, MD or TXT or click to browse'}
+          {label}
         </span>
       </button>
     </>
