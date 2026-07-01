@@ -146,6 +146,7 @@ export default function ChatPanel({
           id: crypto.randomUUID(),
           role: 'assistant',
           text: stripCitationTokens(full),
+          markdown: full,
           paragraphs: buildParagraphs(full, citations),
         },
       ])

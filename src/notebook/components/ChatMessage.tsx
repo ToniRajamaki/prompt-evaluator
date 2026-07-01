@@ -208,8 +208,9 @@ export default function ChatMessage({
         ) === index,
     )
   const citedAnswerMarkdown = message.paragraphs
-    ?.map((para) => para.text)
-    .join('\n\n')
+    ? (message.markdown ??
+      message.paragraphs.map((para) => para.text).join('\n\n'))
+    : undefined
   const inlineCitations = uniqueCitations(
     message.paragraphs?.flatMap((para) => para.citations) ?? [],
   )

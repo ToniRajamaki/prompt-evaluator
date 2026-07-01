@@ -49,6 +49,8 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
+  /** Raw markdown answer. Present when display text has been normalized. */
+  markdown?: string
   /** Structured, source-cited answer. Present only on assistant messages. */
   paragraphs?: AnswerParagraph[]
 }
