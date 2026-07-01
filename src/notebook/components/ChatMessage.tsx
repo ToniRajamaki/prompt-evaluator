@@ -1,5 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Children, cloneElement, isValidElement, type ReactElement } from 'react'
+import type { Components } from 'react-markdown'
 import type { ReactNode } from 'react'
 import type { ChatMessage as ChatMessageType, Citation } from '../types'
 import CitationPill from './CitationPill'
@@ -24,19 +26,78 @@ function sourceIconColor(kind: string): string {
 interface ChatMarkdownProps {
   children: string
   tone?: 'assistant' | 'user'
+  citations?: Citation[]
+  onCitationClick?: (citation: Citation) => void
 }
 
-function ChatMarkdown({ children, tone = 'assistant' }: ChatMarkdownProps) {
+function ChatMarkdown({
+  children,
+  tone = 'assistant',
+  citations = [],
+  onCitationClick,
+}: ChatMarkdownProps) {
   const toneClasses =
     tone === 'user'
       ? 'prose-p:text-gray-800 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-indigo-700'
       : 'prose-p:text-gray-700 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-indigo-700'
+  const components: Components =
+    citations.length > 0
+      ? {
+          p: ({ children, ...props }) => (
+            <p {...props}>
+              {renderMarkdownNodeWithCitations(
+                children,
+                citations,
+                onCitationClick,
+              )}
+            </p>
+          ),
+          li: ({ children, ...props }) => (
+            <li {...props}>
+              {renderMarkdownNodeWithCitations(
+                children,
+                citations,
+                onCitationClick,
+              )}
+            </li>
+          ),
+          blockquote: ({ children, ...props }) => (
+            <blockquote {...props}>
+              {renderMarkdownNodeWithCitations(
+                children,
+                citations,
+                onCitationClick,
+              )}
+            </blockquote>
+          ),
+          td: ({ children, ...props }) => (
+            <td {...props}>
+              {renderMarkdownNodeWithCitations(
+                children,
+                citations,
+                onCitationClick,
+              )}
+            </td>
+          ),
+          th: ({ children, ...props }) => (
+            <th {...props}>
+              {renderMarkdownNodeWithCitations(
+                children,
+                citations,
+                onCitationClick,
+              )}
+            </th>
+          ),
+        }
+      : {}
 
   return (
     <div
       className={`prose prose-sm max-w-none break-words prose-p:my-1.5 prose-pre:my-2 prose-pre:whitespace-pre-wrap prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-0.5 prose-table:my-2 first:prose-p:mt-0 last:prose-p:mb-0 ${toneClasses}`}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {children}
+      </ReactMarkdown>
     </div>
   )
 }
@@ -88,6 +149,50 @@ function renderWithCitations(
   return nodes
 }
 
+function renderMarkdownNodeWithCitations(
+  node: ReactNode,
+  citations: Citation[],
+  onCitationClick?: (citation: Citation) => void,
+): ReactNode {
+  if (typeof node === 'string') {
+    return renderWithCitations(node, citations, onCitationClick)
+  }
+
+  if (Array.isArray(node)) {
+    return Children.map(node, (child) =>
+      renderMarkdownNodeWithCitations(child, citations, onCitationClick),
+    )
+  }
+
+  if (!isValidElement(node)) {
+    return node
+  }
+
+  if (node.type === 'code' || node.type === 'pre') {
+    return node
+  }
+
+  const element = node as ReactElement<{ children?: ReactNode }>
+  if (!element.props.children) {
+    return element
+  }
+
+  return cloneElement(element, {
+    children: Children.map(element.props.children, (child) =>
+      renderMarkdownNodeWithCitations(child, citations, onCitationClick),
+    ),
+  })
+}
+
+function uniqueCitations(citations: Citation[]): Citation[] {
+  const seen = new Set<string>()
+  return citations.filter((citation) => {
+    if (seen.has(citation.chunkId)) return false
+    seen.add(citation.chunkId)
+    return true
+  })
+}
+
 export default function ChatMessage({
   message,
   streaming = false,
@@ -102,6 +207,12 @@ export default function ChatMessage({
           (candidate) => candidate.fileName === citation.fileName,
         ) === index,
     )
+  const citedAnswerMarkdown = message.paragraphs
+    ?.map((para) => para.text)
+    .join('\n\n')
+  const inlineCitations = uniqueCitations(
+    message.paragraphs?.flatMap((para) => para.citations) ?? [],
+  )
 
   if (isUser) {
     return (
@@ -191,22 +302,17 @@ export default function ChatMessage({
                 </div>
               </details>
             )}
-            {message.paragraphs!.map((para) => (
-              <div key={para.id}>
-                <p className="whitespace-pre-wrap">
-                  {renderWithCitations(
-                    para.text,
-                    para.citations,
-                    onCitationClick,
-                  )}
-                </p>
-                {para.citations.length > 0 && (
-                  <span className="sr-only">
-                    Sources: {para.citations.map((c) => c.fileName).join(', ')}
-                  </span>
-                )}
-              </div>
-            ))}
+            <ChatMarkdown
+              citations={inlineCitations}
+              onCitationClick={onCitationClick}
+            >
+              {citedAnswerMarkdown ?? message.text}
+            </ChatMarkdown>
+            {inlineCitations.length > 0 && (
+              <span className="sr-only">
+                Sources: {inlineCitations.map((c) => c.fileName).join(', ')}
+              </span>
+            )}
           </div>
         ) : (
           <ChatMarkdown>{message.text}</ChatMarkdown>
