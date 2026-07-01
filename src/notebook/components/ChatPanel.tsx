@@ -428,7 +428,7 @@ export default function ChatPanel({
             ))}
           </div>
         )}
-        <div className="flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-100">
+        <div className="flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition focus-within:border-sky-300 focus-within:ring-2 focus-within:ring-sky-100">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -449,7 +449,7 @@ export default function ChatPanel({
             onClick={() => void handleSend()}
             disabled={loading || (!input.trim() && contextAttachments.length === 0)}
             aria-label="Send message"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-600 text-white shadow-sm transition hover:bg-amber-700 active:scale-95 disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-600 text-white shadow-sm transition hover:bg-sky-700 active:scale-95 disabled:opacity-50"
           >
             <svg
               className="h-4 w-4"

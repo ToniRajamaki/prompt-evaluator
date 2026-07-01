@@ -168,7 +168,7 @@ export default function FileViewer({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={addSelectionToChat}
-            className="absolute z-30 flex items-center gap-1.5 rounded-full border border-amber-100 bg-white px-3 py-1.5 text-xs font-medium text-amber-700 shadow-lg shadow-gray-900/10 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
+            className="absolute z-30 flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 text-xs font-medium text-sky-700 shadow-lg shadow-gray-900/10 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"
             style={{ left: selectionAction.x, top: selectionAction.y }}
           >
             <svg

@@ -36,7 +36,7 @@ function ResizeHandle({
       onPointerDown={onPointerDown}
       className="group flex w-2 shrink-0 cursor-col-resize touch-none items-center justify-center self-stretch rounded-full"
     >
-      <div className="h-12 w-1 rounded-full bg-transparent transition group-hover:bg-amber-200 group-active:bg-amber-300" />
+      <div className="h-12 w-1 rounded-full bg-transparent transition group-hover:bg-sky-200 group-active:bg-sky-300" />
     </div>
   )
 }
@@ -218,7 +218,7 @@ export default function NotebookApp() {
           className="h-8 w-auto"
         />
         {!backendUp && (
-          <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+          <span className="ml-auto rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700 ring-1 ring-inset ring-sky-200">
             Backend offline — showing demo files
           </span>
         )}

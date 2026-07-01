@@ -83,7 +83,7 @@ export default function CitationPill({
         type="button"
         onClick={() => onClick?.(citation)}
         title={title}
-        className="mx-0.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-0.5 align-baseline text-xs font-medium text-gray-800 shadow-sm transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 active:scale-[0.98]"
+        className="mx-0.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-0.5 align-baseline text-xs font-medium text-gray-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 active:scale-[0.98]"
       >
         <FileIcon extension={getFileExtension(citation.fileName)} />
         <span className="truncate">{displayName}</span>
@@ -97,7 +97,7 @@ export default function CitationPill({
       type="button"
       onClick={() => onClick?.(citation)}
       title={title}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-800 shadow-sm transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 active:scale-[0.98]"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 active:scale-[0.98]"
     >
       <FileIcon extension={getFileExtension(citation.fileName)} />
       <span className="truncate">{displayName}</span>

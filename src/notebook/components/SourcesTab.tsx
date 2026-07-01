@@ -266,7 +266,7 @@ export default function SourcesTab({
           onDragLeave={() => setRootDragOver(false)}
           onDrop={handleRootDrop}
           className={`min-h-[60px] rounded-lg ${
-            rootDragOver ? 'bg-amber-50 ring-1 ring-amber-200' : ''
+            rootDragOver ? 'bg-sky-50 ring-1 ring-sky-200' : ''
           }`}
         >
           <SourceTree

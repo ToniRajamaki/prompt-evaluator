@@ -42,8 +42,8 @@ function ChatMarkdown({
 }: ChatMarkdownProps) {
   const toneClasses =
     tone === 'user'
-      ? 'prose-p:text-gray-800 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-amber-700'
-      : 'prose-p:text-gray-700 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-amber-700'
+      ? 'prose-p:text-gray-800 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-sky-700'
+      : 'prose-p:text-gray-700 prose-strong:text-gray-900 prose-code:text-gray-900 prose-a:text-sky-700'
   const components: Components =
     citations.length > 0
       ? {
@@ -413,7 +413,7 @@ export default function ChatMessage({
                         key={source.fileName}
                         type="button"
                         onClick={() => onCitationClick?.(source)}
-                        className="group flex h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-100"
+                        className="group flex h-8 cursor-pointer items-center gap-2 rounded-md px-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-100"
                         title={`${source.fileName} — jump to cited passage`}
                       >
                         <svg
